@@ -1,10 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
-from osgeo import ogr
-import os
 import pyogrio
-
 
 def dataframe_to_shp(dataframe, shp_path):
     """
@@ -37,7 +34,7 @@ def dataframe_to_gdb(dataframe, gdb_path, layer_name):
     """
     Export a DataFrame to a .gdb file.
     NOTE: The GDB file should already exist; this function adds the layer to it.
-    
+
     Parameters:
     - dataframe: pd.DataFrame or gpd.GeoDataFrame
     - gdb_path: str, path to the .gdb file (including .gdb extension)
@@ -58,13 +55,7 @@ def dataframe_to_gdb(dataframe, gdb_path, layer_name):
         gdf.set_crs(epsg=2039, inplace=True)  # Set CRS to WGS84 (EPSG:2039 Israel TM Grid) by default
 
     # Export to FileGDB
-    # Export to FileGDB
-    pyogrio.write_dataframe(
-        gdf, 
-        gdb_path, 
-        layer=layer_name, 
-        driver='OpenFileGDB'
-    )
+    pyogrio.write_dataframe(gdf, gdb_path, layer=layer_name, driver='OpenFileGDB')
     print(f"Data exported to {gdb_path} with layer name '{layer_name}'")
 
 # Example usage
