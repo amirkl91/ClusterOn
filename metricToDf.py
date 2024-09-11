@@ -148,10 +148,10 @@ def calculate_shared_walls_length(buildings, streets, tessellation):
 
 def calculate_CoveredArea_Q1(buildings, streets, tessellation):
     queen_1 = libpysal.weights.contiguity.Queen.from_dataframe(tessellation, ids="uID", silence_warnings=True)
-    tessellation["covered_area"] = momepy.CoveredArea(tessellation, queen_3, "uID", verbose=False).series
+    tessellation["covered_area"] = momepy.CoveredArea(tessellation, queen_1, "uID", verbose=False).series
     return tessellation[["uID", "covered_area"]]
 
 # Example usage
 if __name__ == "__main__":
     buildings_data, streets_data, tessellation_data, gdb_folder, output_dir = calculate_city_data(cities)
-    perform_metric(buildings_data, streets_data, tessellation_data, output_dir, calculate_neighbor_distance, "neighbor_distance_Q1_example")
+    perform_metric(buildings_data, streets_data, tessellation_data, output_dir, calculate_neighbor_distance_Q1, "neighbor_distance_Q1_example")
