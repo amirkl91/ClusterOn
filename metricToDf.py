@@ -125,14 +125,31 @@ def perform_metric(buildings_data, streets_data, tessellation_data, output_dir, 
 
     return city_metric_dfs
 
-# Example custom metric: Neighbor Distance
-def calculate_neighbor_distance(buildings, streets, tessellation):
+#TODO: maybe to add .copy() when return df
+def calculate_neighbor_distance_Q1(buildings, streets, tessellation):
     """Calculates neighbor distance (log) for buildings."""
     queen_1 = libpysal.weights.contiguity.Queen.from_dataframe(tessellation, ids="uID", silence_warnings=True)
     buildings["neighbor_distance"] = momepy.NeighborDistance(buildings, queen_1, "uID", verbose=False).series
     buildings["log_neighbor_distance"] = np.log(buildings["neighbor_distance"] + 1) / np.log(10)
     return buildings[["uID", "neighbor_distance", "log_neighbor_distance"]]
 
+def calculate_neighbor_distance_Q3(buildings, streets, tessellation):
+    queen_1 = libpysal.weights.contiguity.Queen.from_dataframe(tessellation, ids="uID", silence_warnings=True)
+    # Create a higher-order spatial weights matrix for tessellation (considering neighbors up to 3rd order)
+    queen_3 = momepy.sw_high(k=3, weights=queen_1)
+    buildings['neighbor_distance_q3'] = momepy.NeighborDistance(buildings, queen_3, "uID", verbose=False).series
+    return buildings[["uID", "neighbor_distance_q3"]] 
+
+def calculate_shared_walls_length(buildings, streets, tessellation):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        buildings["shared_walls_length"] = momepy.SharedWalls(buildings).series
+    return buildings[["uID", "shared_walls_length"]]
+
+def calculate_CoveredArea_Q1(buildings, streets, tessellation):
+    queen_1 = libpysal.weights.contiguity.Queen.from_dataframe(tessellation, ids="uID", silence_warnings=True)
+    tessellation["covered_area"] = momepy.CoveredArea(tessellation, queen_3, "uID", verbose=False).series
+    return tessellation[["uID", "covered_area"]]
 
 # Example usage
 if __name__ == "__main__":
