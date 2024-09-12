@@ -12,12 +12,11 @@ def read_config(configfile: str | PosixPath) -> dict | configparser.ConfigParser
             }
     )
     config.read(configfile)
-    data_dir = config.get('Paths','data_dir', fallback='./')
-    outpur_dir = config.get('Paths', 'out_dir', fallback='./')
+
+    params = {}
+    params['data_dir'] = config.get('Paths','data_dir', fallback='./')
+    params['outpur_dir'] = config.get('Paths', 'out_dir', fallback='./')
+    
     # root_folder = config['Paths']['root_folder']  
 
-
-
-    print(config['General'])
-
-    return config
+    return params
