@@ -25,14 +25,23 @@ def get_buildings(buildings, local_crs=None):
         else:
             print('here')
             buildings['height'] = buildings[height_vars[0]]
-        
+    
+    buildings = buildings.drop_duplicates().reset_index()
     return buildings[['geometry', 'height']]
 
 def get_streets(streets):
     streets = momepy.remove_false_nodes(streets)
+    streets.geometry = momepy.close_gaps(streets, tolerance=0.25)
+    streets = momepy.roundabout_simplification(streets)
+
+    # Find way to consolidate networks - something wrong with streets as graph...
+    # streets = momepy.consolidate_intersections(streets, tolerance=30)
+    streets = streets.geometry.drop_duplicates().reset_index()
+
     streets = streets[['geometry']]
+
     streets['length'] = streets.length
-    
+
     return streets
 
 if __name__=='__main__':
@@ -47,13 +56,13 @@ if __name__=='__main__':
     local_crs = 'EPSG:2039'
     network_type = 'drive'
 
-    # datadir = '../../Michaels_data/All_layers_2'
-    # gdb_file = os.path.join(datadir, os.listdir(datadir)[76])
-    # print(gdb_file)
-    # gdf = gpd.read_file(gdb_file)
-    # buildings = get_buildings(gdf)
-    # print(gdf.head())
-    # print(buildings.head())
+    datadir = '../../Michaels_data/All_layers_2'
+    gdb_file = os.path.join(datadir, os.listdir(datadir)[76])
+    print(gdb_file)
+    gdf = gpd.read_file(gdb_file)
+    buildings = get_buildings(gdf)
+    print(gdf.head())
+    print(buildings.head())
 
     osm_graph = osmnx.graph_from_place(place, network_type=network_type)
     osm_graph = osmnx.projection.project_graph(osm_graph, to_crs=local_crs)
