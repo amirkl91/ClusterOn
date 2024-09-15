@@ -4,7 +4,7 @@ import pandas
 import osmnx
 
 
-def calculate_graph_metrics(osmnx_graph, local_crs=None):
+def generate_junctions_metrics(osmnx_graph, local_crs=None):
     streets = osmnx.graph_to_gdfs(
         osmnx.convert.to_undirected(osmnx_graph),
         nodes=False,
@@ -66,4 +66,4 @@ if __name__ == "__main__":
     place = "Jerusalem, Israel"
 
     osm_graph = osmnx.graph_from_place(place, network_type="drive")
-    calculate_graph_metrics()
+    generate_junctions_metrics()
