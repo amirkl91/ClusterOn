@@ -4,11 +4,15 @@ import pandas
 import numpy as np
 from time import time
 
-def get_buildings(buildings, local_crs=None, height_name=None, min_area=20):
+def get_buildings(buildings, streets=None, intersections=None, local_crs=None, height_name=None, min_area=20):
     '''
     get_buildings(buildings, local_crs, height_name, min_area)
     input:
         - buildings : dtaframe containing the relevant buildings
+        - streets (optional) : dataframe containing streets. If give, computes the ID of the street
+          nearest to each building
+        - intersections (optional) : dataframe containing nodes. If give, computes the ID of the closest
+          intersectino for each building.
         - local_crs (optional) : coordinate reference system into which to transform the buildings.
         - height_name (optional) : name of building height variable. If not availbalbe the code looks
           for variables containing "height" in their name, and chose the 1st of them.
@@ -44,18 +48,26 @@ def get_buildings(buildings, local_crs=None, height_name=None, min_area=20):
     buildings = buildings[buildings.geom_type == "Polygon"].reset_index(drop=True)
     buildings = buildings.drop_duplicates(['geometry']).reset_index(drop=True)
     buildings = buildings[buildings.area > min_area]
+    
+    if streets is not None:
+        buildings['street_index'] = momepy.get_nearest_street(buildings, streets)
+        if intersections is not None:
+            buildings["intersect_index"] = momepy.get_nearest_node(buildings, intersections, streets, buildings["street_index"])
+            
 
 
     return buildings.reset_index(drop=True)
 
-def get_streets(streets, local_crs=None):
+def get_streets(streets, local_crs=None, get_nodes = False):
     '''
     get_streets(streets, local_crs)
     input:
         - streets : dtaframe containing the relevant streets
         - local_crs (optional) : coordinate reference system into which to transform the buildings.
+        - get_nodes (False) : Boolean determining if street intersections should be computed. Defaults to false
     output:
-        - minimal_streets : dataframe of the streets containing only geometries and length of streets
+        - streets : dataframe of the streets containing only geometries and length of streets
+        - intersections : if get_nodes = True, outputs coordinates of the intersections (nodes).
     
     Function does not check for geometry type. LineString assumed, PolyLineString should also work propertly.
     Closes gaps between street segments and removes false nodes
@@ -75,9 +87,15 @@ def get_streets(streets, local_crs=None):
     streets['length'] = streets.length
     streets = streets[['geometry', 'length']]
 
+    if get_nodes:
+        graph = momepy.gdf_to_nx(streets)
+        intersections, streets = momepy.nx_to_gdf(graph)
+        streets.rename(columns={'node_start':'intersect_start', 'node_end':'intersect_end'})
+        return streets, intersections
+
     return streets
 
-def tessellation(buildings, streets=None, tess_mode='enclosed', clim='adaptive'):
+def get_tessellation(buildings, streets=None, tess_mode='enclosed', clim='adaptive'):
     '''
     TBD
     Creates tessellations from buildings dataframe, if "enclosed" mode then uses streets as enclosures.
@@ -109,11 +127,11 @@ def tessellation(buildings, streets=None, tess_mode='enclosed', clim='adaptive')
                 try:
                     print('Failed producing enclosed tessellations')
                     print('Trying morphometric tessellations')
-                    tessellations = tessellation(buildings, tess_mode='morphometric')
+                    tessellations = get_tessellation(buildings, tess_mode='morphometric')
                 except:
                     if clim=='adaptive':
                         print('Faild with "adaptive" limits. Resetting limit to 100 and retrying morphological tessellation')
-                        tessellations = tessellation(buildings, tess_mode='morphometric', clim=100)
+                        tessellations = get_tessellation(buildings, tess_mode='morphometric', clim=100)
 
         tess_time = time()
     
@@ -128,7 +146,8 @@ def tessellation(buildings, streets=None, tess_mode='enclosed', clim='adaptive')
     
     else:
         raise NotImplementedError('Requested tessellation mode not implemented')
-        
+
+
 def find_overlaps(gdf):
     # Buffer
     buffer = gdf.copy()
@@ -183,6 +202,6 @@ if __name__=='__main__':
     # print(len(streets))
     # print(streets.head())
     overlaps = find_overlaps(buildings)
-    tessellations, enclosures = tessellation(buildings, streets, tess_mode='enclosed' )
+    tessellations, enclosures = get_tessellation(buildings, streets, tess_mode='enclosed' )
     # tessellations = tessellation(buildings, tess_mode='morphometric' )
 
