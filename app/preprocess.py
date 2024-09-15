@@ -35,6 +35,9 @@ def get_buildings(buildings, local_crs=None, height_name=None, min_area=20):
             else:
                 buildings['height'] = buildings[height_vars[0]]
                 categories.append('height')
+        else:
+            categories.append('height')
+
     buildings = buildings[categories]
     buildings = buildings.explode(index_parts=False).reset_index(drop=True)
     buildings.geometry = buildings.buffer(0)
@@ -60,7 +63,7 @@ def get_streets(streets, local_crs=None):
     Does not, yet, consolidate multiple crossings at intersection into single node.
     '''
 
-    streets.to_crs(local_crs) if local_crs else streets
+    streets = streets.to_crs(local_crs) if local_crs else streets
     streets = momepy.remove_false_nodes(streets)
     streets.geometry = momepy.close_gaps(streets, tolerance=0.25)
     streets = momepy.roundabout_simplification(streets)
@@ -97,24 +100,31 @@ def tessellation(buildings, streets=None, tess_mode='enclosed', clim='adaptive')
             tessellations = momepy.enclosed_tessellation(buildings, enclosures)
         except:
             try:
-                print('Failed producing enclosed tessellations')
-                print('Trying morphometric tessellations')
-                tessellations, limit = tessellation(buildings, tess_mode='morphometric')
+                print('Faild with "adaptive" limit. Resetting limit to 100 and retrying')
+                limit = momepy.buffered_limit(buildings, 100)
+                enclosures = momepy.enclosures(streets, limit)
+                tessellations = momepy.enclosed_tessellation(buildings, enclosures)
+
             except:
-                if clim=='adaptive':
-                    print('Faild with "adaptive" limits. Resetting limit to 100 and retrying morphological tessellation')
-                    tessellations, limit = tessellation(buildings, tess_mode='morphometric', clim=100)
+                try:
+                    print('Failed producing enclosed tessellations')
+                    print('Trying morphometric tessellations')
+                    tessellations = tessellation(buildings, tess_mode='morphometric')
+                except:
+                    if clim=='adaptive':
+                        print('Faild with "adaptive" limits. Resetting limit to 100 and retrying morphological tessellation')
+                        tessellations = tessellation(buildings, tess_mode='morphometric', clim=100)
 
         tess_time = time()
     
         print(f'Computed enclosures: {enc_time-t0} sec\nComputed tessellations: {tess_time-enc_time} sec')
 
-        return tessellations, enclosures, limit
+        return tessellations, enclosures
     elif tess_mode=='morphometric':
         t0 = time()
         tessellations = momepy.morphological_tessellation(buildings, clip=limit)
         print(f'Computed tessellations: {time()-t0} s')
-        return tessellations, limit
+        return tessellations
     
     else:
         raise NotImplementedError('Requested tessellation mode not implemented')
@@ -173,6 +183,6 @@ if __name__=='__main__':
     # print(len(streets))
     # print(streets.head())
     overlaps = find_overlaps(buildings)
-    tessellations, enclosures, limits = tessellation(buildings, streets, tess_mode='enclosed' )
-    # tessellations, limits = tessellation(buildings, tess_mode='morphometric' )
+    tessellations, enclosures = tessellation(buildings, streets, tess_mode='enclosed' )
+    # tessellations = tessellation(buildings, tess_mode='morphometric' )
 
