@@ -35,8 +35,7 @@ def generate_graph_metrics(buildings, streets, tessellation, coplanar='raise',kn
     knn_1 = graph.Graph.build_knn(buildings.centroid, k=knnA, coplanar='clique')  # adjust k if needed
     contiguity = graph.Graph.build_contiguity(buildings)
     buildings['adjacency'] = momepy.building_adjacency(contiguity, knn_1)  # TODO: check for queen1 and queen3
-    buildings['mean_interbuilding_distance'] = momepy.mean_interbuilding_distance(buildings, delaunay,
-                                                                                  knn_1)  # TODO: check for queen1 and queen3
+    buildings['mean_interbuilding_distance'] = momepy.mean_interbuilding_distance(buildings, delaunay, knn_1)  # TODO: check for queen1 and queen3
     buildings['neighbour_distance'] = momepy.neighbor_distance(buildings, delaunay)
     buildings['courtyards_num'] = momepy.courtyards(buildings,
                                                     contiguity)  # Calculate the number of courtyards within the joined structure
@@ -96,20 +95,25 @@ def generate_graph_metrics(buildings, streets, tessellation, coplanar='raise',kn
 
     return buildings, streets
 
-
 def generate_building_metrics(buildings: gpd.geodataframe, height_column_name=None):
     if height_column_name:
-        buildings['floor_area'] = momepy.floor_area(buildings['Shape_Area'], buildings['building_height'])
-        buildings['volume'] = momepy.volume(buildings['Shape_Area'], buildings['building_height'])
+        buildings['Area'] = buildings.geometry.area
+        buildings['floor_area'] = momepy.floor_area(buildings['Area'], buildings['building_height'])
+        buildings['volume'] = momepy.volume(buildings['Area'], buildings['building_height'])
         buildings['form_factor'] = momepy.form_factor(buildings, buildings['building_height'])
 
     # Check if all geometries are either Polygon or MultiPolygon
     if (buildings.geometry.geom_type == 'Polygon').all():
         buildings['corners'] = momepy.corners(buildings)
         buildings['squareness'] = momepy.squareness(buildings)
-    else:
-        buildings['corners'] = momepy.corners(buildings, include_interiors=True)
-        buildings['squareness'] = momepy.squareness(buildings, include_interiors=True)
+        # buildings_centroid_corner_distance = momepy.centroid_corner_distance(buildings)
+        # buildings['centroid_corner_distance_mean'] = buildings_centroid_corner_distance['mean']
+        # buildings['centroid_corner_distance_std'] = buildings_centroid_corner_distance['std']
+    # else:
+        # buildings['corners'] = momepy.corners(buildings, include_interiors=True)
+        # buildings['squareness'] = momepy.squareness(buildings, include_interiors=True)
+
+
 
     # Basic geometric properties
     buildings['perimeter'] = buildings.geometry.length
@@ -122,10 +126,6 @@ def generate_building_metrics(buildings: gpd.geodataframe, height_column_name=No
     buildings['courtyard_index'] = momepy.courtyard_index(buildings)
     buildings['fractal_dimension'] = momepy.fractal_dimension(buildings)
     buildings['facade_ratio'] = momepy.facade_ratio(buildings)
-
-    buildings_centroid_corner_distance = momepy.centroid_corner_distance(buildings)
-    buildings['centroid_corner_distance_mean'] = buildings_centroid_corner_distance['mean']
-    buildings['centroid_corner_distance_std'] = buildings_centroid_corner_distance['std']
 
     # More complex morphological metrics
     buildings['orientation'] = momepy.orientation(buildings)
