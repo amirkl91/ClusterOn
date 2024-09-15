@@ -59,7 +59,8 @@ def generate_junctions_metrics(osmnx_graph, local_crs=None):
     print(edges.head())  # Check the edges
 
     # Optional: Save the nodes with metrics to a GeoPackage file
-    nodes.to_file("nodes_with_metrics.gpkg", layer="nodes", driver="GPKG")
+    # nodes.to_file("nodes_with_metrics.gpkg", layer="nodes", driver="GPKG")
+    return nodes
 
 
 if __name__ == "__main__":
