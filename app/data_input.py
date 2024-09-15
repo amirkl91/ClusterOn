@@ -1,6 +1,7 @@
 import geopandas as gpd
 import fiona
 import os
+import osmnx
 
 def load_gdb_layer_from_folder(gdb_folder, gdb_index=0, layer_index=0):
     """
@@ -89,6 +90,25 @@ def load_shapefile(shapefile_path):
     # Load the shapefile
     gdf = gpd.read_file(shapefile_path)
     return gdf
+
+def load_buildings_from_osm(place):
+    buildings = osmnx.features_from_place(place, tags={'building':True})
+    buildings = buildings[buildings.geom_type=='Polygon'].reset_index(drop=True)
+    return buildings
+
+def load_roads_from_osm(place, network_type):
+    osm_graph = osmnx.graph_from_place(place, network_type='drive')
+    osm_graph = osmnx.projection.project_graph(osm_graph)
+    streets = osmnx.graph_to_gdfs(
+        osmnx.convert.to_undirected(osm_graph),
+        nodes=False,
+        edges=True,
+        node_geometry=False,
+        fill_edge_geometry=True,
+    ).reset_index(drop=True)
+    return streets
+
+
 
 # Example usage
 if __name__ == "__main__":
