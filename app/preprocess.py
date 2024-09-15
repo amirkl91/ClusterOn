@@ -50,7 +50,7 @@ def get_streets(streets, local_crs=None):
         - streets : dtaframe containing the relevant streets
         - local_crs (optional) : coordinate reference system into which to transform the buildings.
     output:
-        - minimal_streets : dataframe of the streets containing only geometries
+        - minimal_streets : dataframe of the streets containing only geometries and length of streets
     
     Function does not check for geometry type. LineString assumed, PolyLineString should also work propertly.
     Closes gaps between street segments and removes false nodes
@@ -63,11 +63,10 @@ def get_streets(streets, local_crs=None):
 
     # Find way to consolidate networks - something wrong with streets as graph...
     # streets = momepy.consolidate_intersections(streets, tolerance=30)
-    streets = streets.geometry.drop_duplicates().reset_index(drop=True)
-
-    streets = streets[['geometry']]
+    streets = streets.drop_duplicates('geometry').reset_index(drop=True)
 
     streets['length'] = streets.length
+    streets = streets[['geometry', 'length']]
 
     return streets.to_crs(local_crs) if local_crs else streets
 
@@ -90,25 +89,27 @@ if __name__=='__main__':
     local_crs = 'EPSG:2039'
     network_type = 'drive'
 
-    datadir = '../../Michaels_data/All_layers_2'
-    gdb_file = os.path.join(datadir, os.listdir(datadir)[76])
-    # print(gdb_file)
-    gdf = gpd.read_file(gdb_file)
-    buildings = get_buildings(gdf)
+    # datadir = '../../Michaels_data/All_layers_2'
+    # gdb_file = os.path.join(datadir, os.listdir(datadir)[76])
+    # # print(gdb_file)
+    # gdf = gpd.read_file(gdb_file)
+    # buildings = get_buildings(gdf)
     # print(gdf.head())
     # print(buildings.head())
 
-    # osm_graph = osmnx.graph_from_place(place, network_type=network_type)
-    # osm_graph = osmnx.projection.project_graph(osm_graph, to_crs=local_crs)
-    # osm_streets = osmnx.graph_to_gdfs(
-    #     osmnx.convert.to_undirected(osm_graph),
-    #     nodes=False,
-    #     edges=True,
-    #     node_geometry=False,
-    #     fill_edge_geometry=True,
-    # ).reset_index(drop=True)
+    osm_graph = osmnx.graph_from_place(place, network_type=network_type)
+    osm_graph = osmnx.projection.project_graph(osm_graph, to_crs=local_crs)
+    osm_streets = osmnx.graph_to_gdfs(
+        osmnx.convert.to_undirected(osm_graph),
+        nodes=False,
+        edges=True,
+        node_geometry=False,
+        fill_edge_geometry=True,
+    ).reset_index(drop=True)
+    print(len(osm_streets))
     # print(osm_streets.head())
 
-    # streets = get_streets(osm_streets)
+    streets = get_streets(osm_streets)
+    print(len(streets))
     # print(streets.head())
 
