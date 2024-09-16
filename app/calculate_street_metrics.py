@@ -49,7 +49,18 @@ def generate_streets_metrics(streets_gdf):
         stroke_continuity[["stroke_id", "hierarchy"]], on="stroke_id", how="left"
     )
     # print(streets_gdf.head())
+    streets_gdf.to_file("streets.gpkg", layer="streets", driver="GPKG")
     return streets_gdf
+
+
+def save_streets_with_classification(gdf):
+    path_to_cluster_layer = (
+        "../Michaels_Data/all_Layers/מרקמים/מרקמים/commondata/myproject16.gdb"
+    )
+    gdf = gpd.read_file(path_to_cluster_layer)
+    print(gdf.columns)
+    print(gdf.head(10))
+    # todo, complete the function
 
 
 if __name__ == "__main__":
@@ -64,5 +75,9 @@ if __name__ == "__main__":
         fill_edge_geometry=True,
     ).reset_index(drop=True)
     streets = streets.drop_duplicates(subset="geometry", keep="first")
-
-    generate_streets_metrics(streets)
+    # columns_to_keep = ['orientation',
+    #    'longest_axis_length', 'compactness_weighted_axis', 'linearity',
+    #    'alignment', 'stroke_id', 'continuity', 'hierarchy','geometry','length']
+    streets = streets[["geometry"]]
+    save_streets_with_classification(streets)
+    # generate_streets_metrics(streets)
