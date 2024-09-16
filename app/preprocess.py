@@ -27,20 +27,23 @@ def get_buildings(buildings, streets=None, intersections=None, local_crs=None, h
     buildings = buildings.to_crs(local_crs) if local_crs is not None else buildings
     categories = ['geometry']
     if height_name:
-        buildings['height'] = buildings[height_name]
+        buildings['height'] = buildings[height_name].fillna()
         categories.append('height')
     else:
         if 'height' not in buildings.keys():
             if len(height_vars := buildings.keys()[['height' in key for key in buildings.keys()]]) == 0:
                 print('No building heights in data')
             elif len(height_vars) == 1:
-                buildings['height'] = buildings[height_vars]
+                buildings['height'] = buildings[height_vars].fillna(0)
                 categories.append('height')
             else:
-                buildings['height'] = buildings[height_vars[0]]
+                buildings['height'] = buildings[height_vars[0]].fillna(0)
                 categories.append('height')
         else:
+            buildings['height'] = buildings['height'].fillna(0)
             categories.append('height')
+    if (buildings['height'].isna().sum() / len(buildings)) < 0.8:
+        categories.pop()
 
     buildings = buildings[categories]
     buildings = buildings.explode(index_parts=False).reset_index(drop=True)
@@ -75,17 +78,18 @@ def get_streets(streets, local_crs=None, get_nodes = False):
     Does not, yet, consolidate multiple crossings at intersection into single node.
     '''
 
-    streets = streets.to_crs(local_crs) if local_crs else streets
+    if local_crs is not None:
+        streets = streets.to_crs(local_crs)
+    streets = streets.drop_duplicates(subset='geometry', keep='first').reset_index(drop=True)
     streets = momepy.remove_false_nodes(streets)
     streets.geometry = momepy.close_gaps(streets, tolerance=0.25)
-    streets = momepy.roundabout_simplification(streets)
+    # streets = momepy.roundabout_simplification(streets)
 
     # Find way to consolidate networks - something wrong with streets as graph...
     # streets = momepy.consolidate_intersections(streets, tolerance=30)
     streets = streets.drop_duplicates('geometry').reset_index(drop=True)
 
-    streets['length'] = streets.length
-    streets = streets[['geometry', 'length']]
+    streets = streets[['geometry']]
 
     if get_nodes:
         graph = momepy.gdf_to_nx(streets)
