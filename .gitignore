@@ -168,3 +168,4 @@ Michaels_Data/
 cache/
 media-post.ipynb/
 output/
+.DS_store
