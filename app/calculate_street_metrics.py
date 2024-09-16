@@ -60,6 +60,7 @@ def save_streets_with_classification(gdf):
     gdf = gpd.read_file(path_to_cluster_layer)
     print(gdf.columns)
     print(gdf.head(10))
+    # todo, complete the function
 
 
 if __name__ == "__main__":
