@@ -75,17 +75,18 @@ def get_streets(streets, local_crs=None, get_nodes = False):
     Does not, yet, consolidate multiple crossings at intersection into single node.
     '''
 
-    streets = streets.to_crs(local_crs) if local_crs else streets
+    if local_crs is not None:
+        streets = streets.to_crs(local_crs)
+    streets = streets.drop_duplicates(subset='geometry', keep='first').reset_index(drop=True)
     streets = momepy.remove_false_nodes(streets)
     streets.geometry = momepy.close_gaps(streets, tolerance=0.25)
-    streets = momepy.roundabout_simplification(streets)
+    # streets = momepy.roundabout_simplification(streets)
 
     # Find way to consolidate networks - something wrong with streets as graph...
     # streets = momepy.consolidate_intersections(streets, tolerance=30)
     streets = streets.drop_duplicates('geometry').reset_index(drop=True)
 
-    streets['length'] = streets.length
-    streets = streets[['geometry', 'length']]
+    streets = streets[['geometry']]
 
     if get_nodes:
         graph = momepy.gdf_to_nx(streets)
