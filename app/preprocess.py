@@ -27,20 +27,23 @@ def get_buildings(buildings, streets=None, intersections=None, local_crs=None, h
     buildings = buildings.to_crs(local_crs) if local_crs is not None else buildings
     categories = ['geometry']
     if height_name:
-        buildings['height'] = buildings[height_name]
+        buildings['height'] = buildings[height_name].fillna()
         categories.append('height')
     else:
         if 'height' not in buildings.keys():
             if len(height_vars := buildings.keys()[['height' in key for key in buildings.keys()]]) == 0:
                 print('No building heights in data')
             elif len(height_vars) == 1:
-                buildings['height'] = buildings[height_vars]
+                buildings['height'] = buildings[height_vars].fillna(0)
                 categories.append('height')
             else:
-                buildings['height'] = buildings[height_vars[0]]
+                buildings['height'] = buildings[height_vars[0]].fillna(0)
                 categories.append('height')
         else:
+            buildings['height'] = buildings['height'].fillna(0)
             categories.append('height')
+    if (buildings['height'].isna().sum() / len(buildings)) < 0.8:
+        categories.pop()
 
     buildings = buildings[categories]
     buildings = buildings.explode(index_parts=False).reset_index(drop=True)

@@ -2,98 +2,90 @@ import geopandas as gpd
 import momepy
 
 from libpysal import graph
-from libpysal import graph
 
+def generate_building_metrics(buildings: gpd.geodataframe, height_column_name=None):
+    if height_column_name:
+        buildings['Area'] = buildings.geometry.area
+        buildings['floor_area'] = momepy.floor_area(buildings['Area'], buildings['building_height'])
+        buildings['volume'] = momepy.volume(buildings['Area'], buildings['building_height'])
+        buildings['form_factor'] = momepy.form_factor(buildings, buildings['building_height'])
 
-def building_metrics(buildings: gpd.geodataframe, height_column_name=None):
-    buildings["area"] = buildings.area
-    if height_column_name is not None:
-        buildings["floor_area"] = momepy.floor_area(
-            buildings["area"], buildings[height_column_name]
-        )
-        buildings["volume"] = momepy.volume(
-            buildings["area"], buildings[height_column_name]
-        )
-        buildings["form_factor"] = momepy.form_factor(
-            buildings, buildings[height_column_name]
-        )
+    # Check if all geometries are either Polygon or MultiPolygon
+    if (buildings.geometry.geom_type == 'Polygon').all():
+        buildings['corners'] = momepy.corners(buildings)
+        buildings['squareness'] = momepy.squareness(buildings)
+        # buildings_centroid_corner_distance = momepy.centroid_corner_distance(buildings)
+        # buildings['centroid_corner_distance_mean'] = buildings_centroid_corner_distance['mean']
+        # buildings['centroid_corner_distance_std'] = buildings_centroid_corner_distance['std']
 
     # Basic geometric properties
-    buildings["perimeter"] = buildings.geometry.length
-    buildings["shape_index"] = momepy.shape_index(
-        buildings, momepy.longest_axis_length(buildings)
-    )
-    buildings["circular_compactness"] = momepy.circular_compactness(buildings)
-    buildings["square_compactness"] = momepy.square_compactness(buildings)
-    buildings["weighted_axis_compactness"] = momepy.compactness_weighted_axis(buildings)
-    buildings["convexity"] = momepy.convexity(buildings)
-    buildings["courtyard_area"] = momepy.courtyard_area(buildings)
-    buildings["courtyard_index"] = momepy.courtyard_index(buildings)
-    buildings["corners"] = momepy.corners(
-        buildings, include_interiors=True
-    )  # include_interiors=False works only for polygons not multipolygons
-    buildings["fractal_dimension"] = momepy.fractal_dimension(buildings)
-    buildings["facade_ratio"] = momepy.facade_ratio(buildings)
-    buildings[["centr_corn_dist_mean", "centr_corn_dist_std"]] = (
-        momepy.centroid_corner_distance(buildings)
-    )
+    buildings['perimeter'] = buildings.geometry.length
+    buildings['shape_index'] = momepy.shape_index(buildings, momepy.longest_axis_length(buildings))
+    buildings['circular_compactness'] = momepy.circular_compactness(buildings)
+    buildings['square_compactness'] = momepy.square_compactness(buildings)
+    buildings['weighted_axis_compactness'] = momepy.compactness_weighted_axis(buildings)
+    buildings['convexity'] = momepy.convexity(buildings)
+    buildings['courtyard_area'] = momepy.courtyard_area(buildings)
+    buildings['courtyard_index'] = momepy.courtyard_index(buildings)
+    buildings['fractal_dimension'] = momepy.fractal_dimension(buildings)
+    buildings['facade_ratio'] = momepy.facade_ratio(buildings)
 
     # More complex morphological metrics
-    buildings["orientation"] = momepy.orientation(buildings)
-    buildings["longest_axis_length"] = momepy.longest_axis_length(buildings)
-    buildings["equivalent_rectangular_index"] = momepy.equivalent_rectangular_index(
-        buildings
-    )
-    buildings["elongation"] = momepy.elongation(buildings)
-    buildings["rectangularity"] = momepy.rectangularity(buildings)
-    buildings["squareness"] = momepy.squareness(
-        buildings, include_interiors=True
-    )  # without interiors works only for polygons not multipolygons
-    buildings["shared_walls_length"] = (
-        momepy.shared_walls(buildings) / buildings["perimeter"]
-    )
-    buildings["perimeter_wall"] = momepy.perimeter_wall(
-        buildings
-    )  # TODO: check for possible parameters
-    buildings["perimeter_wall"] = buildings["perimeter_wall"].fillna(0)
-
-
-def building_graph_metrics(buildings):
+    buildings['orientation'] = momepy.orientation(buildings)
+    buildings['longest_axis_length'] = momepy.longest_axis_length(buildings)
+    buildings['equivalent_rectangular_index'] = momepy.equivalent_rectangular_index(buildings)
+    buildings['elongation'] = momepy.elongation(buildings)
+    buildings['rectangularity'] = momepy.rectangularity(buildings)
+    buildings['shared_walls_length'] = momepy.shared_walls(buildings) / buildings['perimeter']
+    buildings['perimeter_wall'] = momepy.perimeter_wall(buildings)  # TODO: check for possible parameters
+    buildings['perimeter_wall'] = buildings['perimeter_wall'].fillna(0)
     # Metrics related to building adjacency and Graph
 
-    delaunay = graph.Graph.build_triangulation(
-        buildings.centroid, coplanar="clique"
-    ).assign_self_weight()
-    orientation = momepy.orientation(buildings)
-    buildings["alignment"] = momepy.alignment(orientation, delaunay)
+    return buildings
 
-    knn15 = graph.Graph.build_knn(
-        buildings.centroid, k=15, coplanar="clique"
-    )  # adjust k if needed
+def generate_graph_metrics(buildings, streets, tessellation, coplanar='raise',knnA=15, knnB=5):
+    '''
+    :param buildings:
+    :param streets:
+    :param tessellation:
+    :param coplanar: switch to clique if there's overlapping polygons
+    :return:
+    '''
+    delaunay = graph.Graph.build_triangulation(buildings.centroid, coplanar='clique').assign_self_weight()
+    blg_orient = momepy.orientation(buildings)
+    buildings['alignment'] = momepy.alignment(blg_orient, delaunay)
+
+    knn_1 = graph.Graph.build_knn(buildings.centroid, k=knnA, coplanar='clique')  # adjust k if needed
     contiguity = graph.Graph.build_contiguity(buildings)
-    buildings["adjacency"] = momepy.building_adjacency(
-        contiguity, knn15
-    )  # TODO: check for queen1 and queen3
-    buildings["mean_interbuilding_distance"] = momepy.mean_interbuilding_distance(
-        buildings, delaunay, knn15
-    )  # TODO: check for queen1 and queen3
-    buildings["neighbour_distance"] = momepy.neighbor_distance(buildings, delaunay)
-    buildings["courtyards_num"] = momepy.courtyards(
-        buildings, contiguity
-    )  # Calculate the number of courtyards within the joined structure
-    return contiguity
+    buildings['adjacency'] = momepy.building_adjacency(contiguity, knn_1)  # TODO: check for queen1 and queen3
+    buildings['mean_interbuilding_distance'] = momepy.mean_interbuilding_distance(buildings, delaunay, knn_1)  # TODO: check for queen1 and queen3
+    buildings['neighbour_distance'] = momepy.neighbor_distance(buildings, delaunay)
+    buildings['courtyards_num'] = momepy.courtyards(buildings,
+                                                    contiguity)  # Calculate the number of courtyards within the joined structure
+
+    if 'height' in buildings.keys():
+        print('with height')
+        prof_metrics = ['width', 'openness', 'width_dev', 'height', 'height_dev', 'hw_ratio']
+        heights = buildings['height']
+    else:
+        print('no height')
+        prof_metrics = ['width', 'openness', 'width_dev']
+        heights = None
+    streets[prof_metrics] = momepy.street_profile(streets, buildings, height=heights)
+
+    blg_orient = momepy.orientation(buildings)
+    str_orient = momepy.orientation(streets)
+    buildings["street_index"] = momepy.get_nearest_street(buildings, streets)
+    buildings['street_alignment'] = momepy.street_alignment(blg_orient, str_orient, buildings["street_index"])
+
+    return buildings, streets
 
 
-def building_tess_metrics(buildings, tessellations, contiguity):
-    ### Has wierd errors. Dissregard for now
-    # metrics related to tessellation
-    tess_orient = momepy.orientation(tessellations)
-    buildings["cell_orientation"] = momepy.cell_alignment(
-        buildings["orientation"], tess_orient
-    )
-    buildings["num_of_neighbours"] = momepy.neighbors(
-        tessellations, contiguity, weighted=True
-    )
+def generate_all_metrics(buildings, streets, tessellation, height_column_name=None):
+    buildings = generate_building_metrics(buildings, height_column_name)
+    # streets = generate_streets_metrics(streets)
+    buildings, streets = generate_graph_metrics(buildings, streets, tessellation)
+    return buildings, streets
 
 def generate_streets_metrics(streets_gdf):
     streets_geometry = streets_gdf["geometry"]
@@ -124,7 +116,7 @@ def generate_streets_metrics(streets_gdf):
         stroke_continuity[["stroke_id", "hierarchy"]], on="stroke_id", how="left"
     )
 
-def generate_junctions_metrics(streets, local_crs=None, verbose=False):
+def generate_junctions_metrics(streets, verbose=False):
 
     graph = momepy.gdf_to_nx(streets)
 
