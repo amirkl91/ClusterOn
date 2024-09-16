@@ -1,30 +1,34 @@
 import geopandas as gpd
-import fiona
-import os
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import configparser
+# import fiona
+# import os
+# import matplotlib.pyplot as plt
+# from matplotlib.lines import Line2D
+# import configparser
 import momepy
-import libpysal
-import pandas as pd
-import osmnx
-import pandas
-from bokeh.plotting import show
-from clustergram import Clustergram
-from shapely.geometry import Point
+# import libpysal
+# import pandas as pd
+# import osmnx
+# import pandas
+# from bokeh.plotting import show
+# from clustergram import Clustergram
+# from shapely.geometry import Point
 from libpysal import graph
 from libpysal import graph
-from packaging.version import Version
-import numpy as np
+# from packaging.version import Version
+# import numpy as np
+
+import helper_functions
 
 local_crs = "EPSG:2039"
 
 
 
 def get_all_building_metrics(buildings: gpd.geodataframe, height_column_name=None):
-    buildings['floor_area'] = momepy.floor_area(buildings['Shape_Area'], buildings['building_height'])
-    buildings['volume'] = momepy.volume(buildings['Shape_Area'], buildings['building_height'])
-    buildings['form_factor'] = momepy.form_factor(buildings, buildings['building_height'])
+    buildings['area'] = buildings.area
+    if height_column_name is not None:
+        buildings['floor_area'] = momepy.floor_area(buildings['area'], buildings[height_column_name])
+        buildings['volume'] = momepy.volume(buildings['area'], buildings[height_column_name])
+        buildings['form_factor'] = momepy.form_factor(buildings, buildings[height_column_name])
     # Basic geometric properties
     buildings['perimeter'] = buildings.geometry.length
     buildings['shape_index'] = momepy.shape_index(buildings, momepy.longest_axis_length(buildings))
@@ -62,7 +66,7 @@ def get_all_building_metrics(buildings: gpd.geodataframe, height_column_name=Non
     contiguity = graph.Graph.build_contiguity(buildings)
     buildings['adjacency'] = momepy.building_adjacency(contiguity, knn15)  # TODO: check for queen1 and queen3
     buildings['mean_interbuilding_distance'] = momepy.mean_interbuilding_distance(buildings, delaunay,
-                                                                                  knn15)  # TODO: check for queen1 and queen3
+                                                                                    knn15)  # TODO: check for queen1 and queen3
     buildings['neighbour_distance'] = momepy.neighbor_distance(buildings, delaunay)
     buildings['courtyards_num'] = momepy.courtyards(buildings,
                                                     contiguity)  # Calculate the number of courtyards within the joined structure
@@ -74,3 +78,17 @@ def get_all_building_metrics(buildings: gpd.geodataframe, height_column_name=Non
     tess_orient = momepy.orientation(tessellation)
     buildings['cell_orientation'] = momepy.cell_alignment(blg_orient, tess_orient)
     buildings['num_of_neighbours'] = momepy.neighbors(tessellation, contiguity, weighted=True)
+
+
+if __name__=='__main__':
+    from data_input import load_buildings_from_osm
+    from preprocess import get_buildings
+
+    place = 'Jerusalem'
+    local_crs = 'EPSG:2039'
+    network_type = 'drive'
+
+    buildings = load_buildings_from_osm(place)
+    buildings = get_buildings(buildings=buildings, local_crs=local_crs, )
+
+    # get_all_building_metrics(buildings, height_column_name='height')
