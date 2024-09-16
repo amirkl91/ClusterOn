@@ -2,6 +2,7 @@ import geopandas as gpd
 import fiona
 import os
 import osmnx
+import osmnx.convert
 
 def load_gdb_layer_from_folder(gdb_folder, gdb_index=0, layer_index=0):
     """
