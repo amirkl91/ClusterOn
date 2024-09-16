@@ -2,6 +2,8 @@ from time import time
 import preprocess as pp
 from data_input import load_buildings_from_osm, load_roads_from_osm
 from calculate_building_metrics import *
+from calculate_street_metrics import generate_streets_metrics
+from calculate_junction_metrics import generate_junctions_metrics
 
 place = 'Jerusalem'
 local_crs = 'EPSG:2039'
@@ -35,3 +37,16 @@ try:
 except:
     print('Failed computing building-tessellation metrics')
 
+try:
+    t0 = time()
+    generate_streets_metrics(streets)
+    print(f'Street metrics : {time()-t0} s')
+except:
+    print('Failed computing street-related metrics')
+
+try:
+    t0 = time()
+    intersectinos, streets = generate_junctions_metrics(streets)
+    print(f'Street junction metrics: {time()-t0} s')
+except:
+    print('Failed computing junction-related metrics')
