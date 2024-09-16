@@ -97,8 +97,8 @@ def load_buildings_from_osm(place):
     return buildings
 
 def load_roads_from_osm(place, network_type):
-    osm_graph = osmnx.graph_from_place(place, network_type='drive')
-    osm_graph = osmnx.projection.project_graph(osm_graph)
+    osm_graph = osmnx.graph_from_place(place, network_type=network_type)
+    # osm_graph = osmnx.projection.project_graph(osm_graph)
     streets = osmnx.graph_to_gdfs(
         osmnx.convert.to_undirected(osm_graph),
         nodes=False,
