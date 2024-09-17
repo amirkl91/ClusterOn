@@ -9,10 +9,10 @@ local_crs = 'EPSG:2039'
 network_type = 'drive'
 
 streets = load_roads_from_osm(place, network_type=network_type)
-streets, intersections = pp.get_streets(streets=streets, local_crs=local_crs, get_nodes=True)
+streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_nodes=True)
 
 # buildings = load_buildings_from_osm(place)
-# buildings = pp.get_buildings(buildings=buildings, streets=streets, intersections=intersections, local_crs=local_crs, )
+# buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs, )
 
 # tesselations, enclosures = pp.get_tessellation(buildings=buildings, streets=streets, 
 #                                             tess_mode='enclosed', clim='adaptive')
@@ -45,7 +45,7 @@ textures_layer = layers[0]  # Modify if you want to choose a different layer
 
 # Load the specific layer
 gdf = gpd.read_file(gdb_file, layer=textures_layer)
-buildings = pp.get_buildings(gdf, streets, intersections)
+buildings = pp.get_buildings(gdf, streets, junctions)
 # buildings = gdf[["geometry"]]
 # m_buildings = m_buildings.to_crs(osm_buildings.crs)
 

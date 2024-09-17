@@ -4,15 +4,15 @@ import pandas
 import numpy as np
 from time import time
 
-def get_buildings(buildings, streets=None, intersections=None, local_crs=None, height_name=None, min_area=20):
+def get_buildings(buildings, streets=None, junctions=None, local_crs=None, height_name=None, min_area=20):
     '''
     get_buildings(buildings, local_crs, height_name, min_area)
     input:
         - buildings : dtaframe containing the relevant buildings
         - streets (optional) : dataframe containing streets. If give, computes the ID of the street
           nearest to each building
-        - intersections (optional) : dataframe containing nodes. If give, computes the ID of the closest
-          intersectino for each building.
+        - junctions (optional) : dataframe containing nodes. If give, computes the ID of the closest
+          junction for each building.
         - local_crs (optional) : coordinate reference system into which to transform the buildings.
         - height_name (optional) : name of building height variable. If not availbalbe the code looks
           for variables containing "height" in their name, and chose the 1st of them.
@@ -53,29 +53,29 @@ def get_buildings(buildings, streets=None, intersections=None, local_crs=None, h
     buildings = buildings[buildings.area > min_area]
     
     if streets is not None:
-        buildings['street_index'] = momepy.get_nearest_street(buildings, streets)
-        if intersections is not None:
-            buildings["intersect_index"] = momepy.get_nearest_node(buildings, intersections, streets, buildings["street_index"])
+        buildings['street_index'] = momepy.get_nearest_street(buildings, streets).astype(int)
+        if junctions is not None:
+            buildings["intersect_index"] = momepy.get_nearest_node(buildings, junctions, streets, buildings["street_index"]).astype(int)
             
 
 
     return buildings.reset_index(drop=True)
 
-def get_streets(streets, local_crs=None, get_nodes = False):
+def get_streets(streets, local_crs=None, get_juncions = False):
     '''
     get_streets(streets, local_crs)
     input:
         - streets : dtaframe containing the relevant streets
         - local_crs (optional) : coordinate reference system into which to transform the buildings.
-        - get_nodes (False) : Boolean determining if street intersections should be computed. Defaults to false
+        - get_nodes (False) : Boolean determining if street junctions should be computed. Defaults to false
     output:
         - streets : dataframe of the streets containing only geometries and length of streets
-        - intersections : if get_nodes = True, outputs coordinates of the intersections (nodes).
+        - junctions : if get_nodes = True, outputs coordinates of the junctions (nodes).
     
     Function does not check for geometry type. LineString assumed, PolyLineString should also work propertly.
     Closes gaps between street segments and removes false nodes
     Removes duplicated streets, if any present.
-    Does not, yet, consolidate multiple crossings at intersection into single node.
+    Does not, yet, consolidate multiple crossings at junction into single node.
     '''
 
     if local_crs is not None:
@@ -86,16 +86,16 @@ def get_streets(streets, local_crs=None, get_nodes = False):
     # streets = momepy.roundabout_simplification(streets)
 
     # Find way to consolidate networks - something wrong with streets as graph...
-    # streets = momepy.consolidate_intersections(streets, tolerance=30)
+    # streets = momepy.consolidate_junctions(streets, tolerance=30)
     streets = streets.drop_duplicates('geometry').reset_index(drop=True)
 
     streets = streets[['geometry']]
 
-    if get_nodes:
+    if get_juncions:
         graph = momepy.gdf_to_nx(streets)
-        intersections, streets = momepy.nx_to_gdf(graph)
-        streets.rename(columns={'node_start':'intersect_start', 'node_end':'intersect_end'})
-        return streets, intersections
+        junctions, streets = momepy.nx_to_gdf(graph)
+        streets.rename(columns={'node_start':'junction_start', 'node_end':'junction_end'})
+        return streets, junctions
 
     return streets
 
@@ -140,6 +140,10 @@ def get_tessellation(buildings, streets=None, tess_mode='enclosed', clim='adapti
         tess_time = time()
     
         print(f'Computed enclosures: {enc_time-t0} sec\nComputed tessellations: {tess_time-enc_time} sec')
+        
+        tessellations['tID'] = tessellations.index
+        tessellations = tessellations[tessellations['tID'] >= 0]
+        tessellations = tessellations.drop_duplicates('tID', keep='first')
 
         return tessellations, enclosures
     elif tess_mode=='morphometric':
