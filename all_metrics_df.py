@@ -230,10 +230,10 @@ def city_properties_df(config_file='config.ini'):# Read or create configuration 
     
     config.read(config_file)
     output_folder = config['Paths']['output_folder']
+    flatness_csv_path = config['Paths']['flatness_csv_path']
 
-    flatness_csv_path = '/Users/annarubtsov/Desktop/DSSG/data/flatness.csv'
     # Read the flatness data from the CSV
-    flatness_df = pd.read_csv(flatness_csv_path)
+    flatness_df = pd.read_csv('data/flatness.csv')
     
     # add the cities database from Wikipedia
     # Source URL: https://he.wikipedia.org/wiki/ערים_בישראל
@@ -389,5 +389,5 @@ for index, row in top_10_pairs.iterrows():
     # Get the corresponding SEM for the metric
     metric_sem = f"{metric}_sem"
     # Plot features
-    plot_features(city_metrics, city_properties, city_sem[metric_sem], metric, property)
+    plot_features(city_metrics, city_properties, city_sem[['city', metric_sem]], metric, property)
 
