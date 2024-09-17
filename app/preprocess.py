@@ -36,14 +36,18 @@ def get_buildings(buildings, streets=None, junctions=None, local_crs=None, heigh
             elif len(height_vars) == 1:
                 buildings['height'] = buildings[height_vars].fillna(0)
                 categories.append('height')
+                if (buildings['height'].isna().sum() / len(buildings)) < 0.8:
+                    categories.pop()
             else:
                 buildings['height'] = buildings[height_vars[0]].fillna(0)
                 categories.append('height')
+                if (buildings['height'].isna().sum() / len(buildings)) < 0.8:
+                    categories.pop()
         else:
             buildings['height'] = buildings['height'].fillna(0)
             categories.append('height')
-    if (buildings['height'].isna().sum() / len(buildings)) < 0.8:
-        categories.pop()
+            if (buildings['height'].isna().sum() / len(buildings)) < 0.8:
+                categories.pop()
 
     buildings = buildings[categories]
     buildings = buildings.explode(index_parts=False).reset_index(drop=True)
@@ -55,7 +59,7 @@ def get_buildings(buildings, streets=None, junctions=None, local_crs=None, heigh
     if streets is not None:
         buildings['street_index'] = momepy.get_nearest_street(buildings, streets).astype(int)
         if junctions is not None:
-            buildings["intersect_index"] = momepy.get_nearest_node(buildings, junctions, streets, buildings["street_index"]).astype(int)
+            buildings["junction_index"] = momepy.get_nearest_node(buildings, junctions, streets, buildings["street_index"]).astype(int)
             
 
 
@@ -149,7 +153,8 @@ def get_tessellation(buildings, streets=None, tess_mode='enclosed', clim='adapti
     elif tess_mode=='morphometric':
         t0 = time()
         tessellations = momepy.morphological_tessellation(buildings, clip=limit)
-        print(f'Computed tessellations: {time()-t0} s')
+        tessellations['tID'] = tessellations.index
+        # print(f'Computed tessellations: {time()-t0} s')
         return tessellations
     
     else:
