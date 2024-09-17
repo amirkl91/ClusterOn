@@ -171,3 +171,4 @@ output/
 .DS_store
 *.gpkg
 
+sweetviz_report.html
