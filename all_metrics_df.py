@@ -57,7 +57,8 @@ def process_city(city, network_type='drive', config_file='config.ini'):
     
     config.read(config_file)
     output_folder = config['Paths']['output_folder']
-    
+    output_dir = config['Paths']['output_dir']
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
