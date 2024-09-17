@@ -267,10 +267,25 @@ def city_properties_df(config_file='config.ini'):# Read or create configuration 
     cities.to_csv(os.path.join(output_folder, 'city_properties.csv'), index=False)
     return cities
 
-def find_corr():
-    # Define the file paths for the CSV files
-    city_metrics_path = '/Users/annarubtsov/Desktop/processedData/all_metrics_df/city_metrics.csv'
-    city_properties_path = '/Users/annarubtsov/Desktop/processedData/all_metrics_df/city_properties.csv'
+def find_corr(config_file='config.ini'):
+    config = configparser.ConfigParser()
+    
+    if not os.path.isfile(config_file):
+        config['Paths'] = {
+            'gdb_folder': '/path/to/your/gdb/folder',
+            'output_dir': '/path/to/your/output/folder',
+            'output_folder': '/path/to/your/output/folder'
+        }
+        with open(config_file, 'w') as configfile:
+            config.write(configfile)
+        print(f"Created configuration file '{config_file}'.")
+    
+    config.read(config_file)
+    output_folder = config['Paths']['output_folder']
+
+    # Construct the full path to city_metrics.csv in the output folder
+    city_metrics_path = os.path.join(output_folder, 'city_metrics.csv')
+    city_properties_path = os.path.join(output_folder, 'city_properties.csv')
 
     # Read the CSV files into DataFrames
     city_metrics = pd.read_csv(city_metrics_path)
@@ -306,11 +321,11 @@ def find_corr():
     correlation_df = correlation_df.sort_values(by='Correlation_Value', key=lambda x: x.abs(), ascending=False)
 
     # Save the metrics DataFrame as a CSV
-    correlation_df.to_csv(os.path.join('/Users/annarubtsov/Desktop/processedData/all_metrics_df', 'correlation.csv'), index=False)
+    correlation_df.to_csv(os.path.join(output_folder,, 'correlation.csv'), index=False)
 
     print(correlation_df)
 
-def plot_features(city_metrics, city_properties, x_err_values, col1, col2):
+def plot_features(config_file='config.ini', city_metrics, city_properties, x_err_values, col1, col2):
     """
     Plot the relationship between two features, one from city_metrics and one from city_properties.
     
@@ -320,6 +335,27 @@ def plot_features(city_metrics, city_properties, x_err_values, col1, col2):
     - col1: Feature from city_metrics to plot on the x-axis.
     - col2: Feature from city_properties to plot on the y-axis.
     """
+
+    config = configparser.ConfigParser()
+    
+    if not os.path.isfile(config_file):
+        config['Paths'] = {
+            'gdb_folder': '/path/to/your/gdb/folder',
+            'output_dir': '/path/to/your/output/folder',
+            'output_folder': '/path/to/your/output/folder'
+        }
+        with open(config_file, 'w') as configfile:
+            config.write(configfile)
+        print(f"Created configuration file '{config_file}'.")
+    
+    config.read(config_file)
+    output_folder = config['Paths']['output_folder']
+
+    # Construct the full path to city_metrics.csv in the output folder
+    city_metrics_path = os.path.join(output_folder, 'city_metrics.csv')
+    city_properties_path = os.path.join(output_folder, 'city_properties.csv')
+
+
     # Merge the two DataFrames on the 'city' column, along with the x_err_values (error bars)
     merged_df = pd.merge(city_metrics, city_properties, on='city')
     merged_df = pd.merge(merged_df, x_err_values[['city', col1+'_sem']], on='city')  # Assuming col1_sem is the error column
@@ -367,19 +403,26 @@ def plot_features(city_metrics, city_properties, x_err_values, col1, col2):
 
 #find_corr()
 
+config = configparser.ConfigParser()
+if not os.path.isfile(config_file):
+    config['Paths'] = {
+        'gdb_folder': '/path/to/your/gdb/folder',
+        'output_dir': '/path/to/your/output/folder',
+        'output_folder': '/path/to/your/output/folder'
+    }
+    with open(config_file, 'w') as configfile:
+        config.write(configfile)
+    print(f"Created configuration file '{config_file}'.")
 
-city_metrics_path = '/Users/annarubtsov/Desktop/processedData/all_metrics_df/city_metrics.csv'
-city_properties_path = '/Users/annarubtsov/Desktop/processedData/all_metrics_df/city_properties.csv'
-city_sem_path = '/Users/annarubtsov/Desktop/processedData/all_metrics_df/city_sem.csv'
+config.read(config_file)
+output_folder = config['Paths']['output_folder']
 
-city_metrics = pd.read_csv(city_metrics_path)
-city_properties = pd.read_csv(city_properties_path)
-city_sem = pd.read_csv(city_sem_path)
+# Read the CSV files into DataFrames
+city_metrics = pd.read_csv(os.path.join(output_folder, 'city_metrics.csv'))
+city_properties = pd.read_csv(os.path.join(output_folder, 'city_properties.csv'))
+city_sem = pd.read_csv(os.path.join(output_folder, 'city_sem.csv'))
 
-# File path to the correlation CSV
-correlation_csv_path = '/Users/annarubtsov/Desktop/processedData/all_metrics_df/correlation.csv'
-# Read the correlation CSV into a DataFrame
-correlation_df = pd.read_csv(correlation_csv_path)
+correlation_df_path = pd.read_csv(os.path.join(output_folder, 'correlation.csv'))
 # Get the first 10 metric-property pairs
 top_10_pairs = correlation_df.head(10)
 # Loop through the first 10 metric-property pairs and plot each
