@@ -1,3 +1,4 @@
+from kneed import KneeLocator
 from rtree import index   #TODO: check KDtree
 import geopandas as gpd
 import fiona
@@ -12,6 +13,7 @@ from bokeh.io import output_notebook
 from bokeh.plotting import show
 from clustergram import Clustergram
 from shapely.geometry import Point
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
@@ -171,3 +173,58 @@ def buffered_limit(gdf, buffer: float | str = 100, min_buffer: float = 0, max_bu
         if GPD_GE_10
         else gdf.buffer(buffer, **kwargs).unary_union
     )
+
+
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
+import numpy as np
+from kneed import KneeLocator
+import matplotlib.pyplot as plt
+
+
+def _elbow(gdf, K):
+    inertias = []
+    for k in K:
+        # Building and fitting the model
+        kmeanModel = KMeans(n_clusters=k)
+        kmeanModel.fit(gdf.fillna(0))
+
+        inertias.append(kmeanModel.inertia_)
+
+    kneedle = KneeLocator(K, inertias, curve='convex', direction='decreasing')
+    return kneedle.elbow
+
+
+def num_of_clusters_score(gdf: gpd.GeoDataFrame, method, model='kmeans', standardize=True, min_clusters=1,
+                          max_clusters=15,
+                          n_init=13, random_state=42) -> int:
+    """
+    :param gdf: geoDataFrame that contains the data
+    :param model: model to use for clustering ['kmeans', 'gmm', 'minibatchkmeans', 'hierarchical']
+    :param method: method to use to calculate the number of clusters ['elbow', 'silhouette', 'davies_bouldin', 'calinski_harabasz']
+    :param max_clusters: maximum number of clusters to consider
+    :param min_clusters: minimum number of clusters to consider
+    :param standardized: whether to standardize the data or not
+    :return: most suitable number of clusters
+    """
+    if method not in ["elbow", "silhouette", "davies_bouldin", "calinski_harabasz"]:
+        raise ValueError('Method should be one of ["elbow", "silhouette", "davies_bouldin", "calinski_harabasz"]')
+
+    if standardize:
+        gdf = (gdf - gdf.mean()) / gdf.std()
+    K = range(min_clusters, max_clusters + 1)
+
+    if method == "elbow":
+        if model != 'kmeans':
+            raise ValueError('Elbow method is only supported for kmeans')
+        return _elbow(gdf, K)
+
+    cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
+    cgram.fit(gdf.fillna(0))
+
+    if method == "silhouette":
+        return cgram.silhouette_score().idxmax()
+    elif method == "davies_bouldin":
+        return cgram.davies_bouldin_score().idxmax()
+    elif method == "calinski_harabasz":
+        return cgram.calinski_harabasz_score().idxmax()
