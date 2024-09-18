@@ -13,26 +13,24 @@ import matplotlib.pyplot as plt
 from bokeh.plotting import show
 import matplotlib.patches as mpatches
 
-
 ## config part
 
 def get_cgram(standardized, max_range):
-    cgram = Clustergram(range(1, max_range), n_init=10, random_state=0)
+    cgram = Clustergram(range(1, max_range), n_init=10, random_state=42)
     cgram.fit(standardized.fillna(0))
     show(cgram.bokeh())
     cgram.labels.head()
     return cgram
 
-def add_cluster_col(merged_df, buildings, cgram, clusters_num):
-    merged_df["cluster"] = cgram.labels[clusters_num].values
-    urban_types = buildings[["geometry", "uID"]].merge(merged_df[["uID", "cluster"]], on="uID")
-    urban_types.explore("cluster", categorical=True, prefer_canvas=True, tiles="CartoDB Positron", tooltip=False)
-    return urban_types
+def add_cluster_col(merged, buildings, cgram, clusters_num):
+    merged["cluster"] = cgram.labels[clusters_num].values
+    buildings["cluster"] = merged["cluster"]
+    return buildings
 
-def plot_clusters(urban_types, ):
+def plot_clusters(buildings):
     # Define the colors for each cluster
     colors = plt.get_cmap('tab20').colors
-    categories = urban_types['cluster'].unique()
+    categories = buildings['cluster'].unique()
 
     # Create the legend handles
     legend_handles = [mpatches.Patch(color=colors[i], label=f'Cluster {category}') 
@@ -42,7 +40,7 @@ def plot_clusters(urban_types, ):
     fig, ax = plt.subplots(1, 1, figsize=(12, 12))
 
     # Plot for 'cluster' attribute
-    urban_types.plot(column='cluster', cmap='Set1', legend=False, ax=ax)
+    buildings.plot(column='cluster', cmap='Set1', legend=False, ax=ax)
 
     # Add title and customize plot
     ax.set_title('Urban Types by Cluster', fontsize=16)
@@ -53,3 +51,6 @@ def plot_clusters(urban_types, ):
 
     # Display the plot
     plt.show()
+
+    # buildings.plot( "cluster", categorical=True, figsize=(16, 16), legend=True ).set_axis_off()
+
