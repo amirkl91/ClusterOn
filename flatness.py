@@ -93,15 +93,16 @@ cities = ['Nazareth',
            'Netanya', 'Beer Sheva', 'Bnei Brak', 'Holon', 'Ramat Gan', 'Rehovot', 'Ashkelon',
            'Bat Yam', 'Beit Shemesh', 'Kfar Saba', 'Herzliya', 'Hadera', 'Modiin']
 
-all_data = []
-for city in cities:
-    print(city)
-    #print(time.time())
-    try:
-        result = compute_city_flatness(city, "Israel")
-        result['city'] = city
-        all_data.append(result)
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+if __name__ == '__main__':
+    all_data = []
+    for city in cities:
+        print(city)
+        #print(time.time())
+        try:
+            result = compute_city_flatness(city, "Israel")
+            result['city'] = city
+            all_data.append(result)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
 
-pd.DataFrame(all_data).to_csv('data/flatness.csv', index=False)
+    pd.DataFrame(all_data).to_csv('data/flatness.csv', index=False)
