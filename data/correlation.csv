@@ -1,0 +1,496 @@
+Metric_Property_Pair,Correlation_Value
+"('street_width', 'density')",-0.7684210526315788
+"('building_neighbour_distance', 'density')",-0.7669172932330827
+"('street_openness', 'density')",-0.7473684210526315
+"('building_alignment', 'elevation_range')",0.7228923860647364
+"('building_mean_interbuilding_distance', 'density')",-0.7097744360902255
+"('building_street_alignment', 'flatness_score')",-0.7052631578947368
+"('building_street_alignment', 'elevation_range')",0.6867477667614995
+"('street_linearity', 'elevation_range')",-0.6822296893485948
+"('street_linearity', 'median_elevation')",-0.6649116679317053
+"('street_linearity', 'mean_elevation')",-0.6556390977443608
+"('junction_closeness', 'population')",-0.6466165413533834
+"('street_width_dev', 'year founded')",-0.6437740759356338
+"('junction_x', 'flatness_score')",-0.6330827067669172
+"('building_alignment', 'flatness_score')",-0.625563909774436
+"('street_width_dev', 'density')",0.6120300751879698
+"('street_width', 'area')",0.5969924812030075
+"('street_orientation', 'density')",-0.5954887218045113
+"('street_orientation', 'median_elevation')",0.5904475784235165
+"('street_linearity', 'density')",0.5894736842105263
+"('building_orientation', 'median_elevation')",0.5829259532206692
+"('junction_x', 'mean_elevation')",0.5774436090225563
+"('building_orientation', 'density')",-0.5774436090225563
+"('street_linearity', 'flatness_score')",0.5759398496240601
+"('street_orientation', 'mean_elevation')",0.5714285714285714
+"('building_elongation', 'density')",-0.5593984962406015
+"('junction_x', 'median_elevation')",0.5543437774498494
+"('junction_x', 'elevation_range')",0.5376512121356476
+"('building_orientation', 'mean_elevation')",0.5338345864661653
+"('building_neighbour_distance', 'area')",0.5278195488721804
+"('building_perimeter_wall', 'population')",0.5263157894736841
+"('building_street_alignment', 'median_elevation')",0.5242572766384599
+"('building_shared_walls_length', 'population')",0.5142857142857143
+"('building_street_alignment', 'mean_elevation')",0.5052631578947367
+"('building_street_alignment', 'socioeconomic')",-0.4985225291692867
+"('junction_cyclomatic', 'population')",0.49323308270676686
+"('building_alignment', 'mean_elevation')",0.49022556390977434
+"('junction_gamma', 'population')",0.48872180451127817
+"('building_alignment', 'median_elevation')",0.48664915062422326
+"('building_elongation', 'mean_elevation')",0.4827067669172932
+"('junction_meshedness', 'population')",0.4827067669172932
+"('street_width', 'elevation_range')",0.48192825737649087
+"('junction_closeness', 'year founded')",0.48090998989941147
+"('street_openness', 'elevation_range')",0.4759041541592848
+"('junction_cyclomatic', 'density')",0.47218045112781953
+"('building_adjacency', 'density')",-0.47067669172932325
+"('junction_mean_nd', 'population')",0.4661654135338345
+"('street_orientation', 'elevation_range')",0.465361973529174
+"('junction_edge_node_ratio', 'socioeconomic')",0.4634582534173185
+"('building_adjacency', 'population')",-0.4631578947368421
+"('building_circular_compactness', 'population')",-0.4616541353383458
+"('junction_edge_node_ratio', 'population')",0.4601503759398496
+"('street_openness', 'area')",0.4601503759398496
+"('junction_degree', 'socioeconomic')",0.4573601185039327
+"('junction_meanlen', 'median_elevation')",0.4558104872925491
+"('junction_closeness', 'area')",-0.4496240601503759
+"('street_mm_len', 'median_elevation')",0.44828886208970176
+"('street_length', 'median_elevation')",0.44828886208970176
+"('junction_meshedness', 'socioeconomic')",0.4474506492696808
+"('building_orientation', 'elevation_range')",0.445783638073254
+"('junction_mean_nd', 'density')",0.4451127819548871
+"('junction_meanlen', 'elevation_range')",0.43674748324744483
+"('building_squareness', 'elevation_range')",0.4352414574431433
+"('street_orientation', 'area')",0.431578947368421
+"('building_neighbour_distance', 'mean_elevation')",0.4300751879699248
+"('building_perimeter_wall', 'density')",0.4300751879699248
+"('street_length', 'elevation_range')",0.4292173542259372
+"('street_mm_len', 'elevation_range')",0.4292173542259372
+"('building_neighbour_distance', 'elevation_range')",0.4277113284216356
+"('street_compactness_weighted_axis', 'year founded')",-0.4255976587927699
+"('street_longest_axis_length', 'year founded')",-0.4255976587927699
+"('building_mean_interbuilding_distance', 'area')",0.42556390977443603
+"('junction_gamma', 'socioeconomic')",0.42305810961613777
+"('junction_node_density_weighted', 'median_elevation')",-0.42045884883916657
+"('junction_node_density_weighted', 'socioeconomic')",0.41924677529527166
+"('building_orientation', 'area')",0.41804511278195483
+"('street_openness', 'median_elevation')",0.4166980362377429
+"('junction_cluster', 'growth rate')",0.4164161348893741
+"('building_elongation', 'median_elevation')",0.4151937111971734
+"('junction_node_density_weighted', 'growth rate')",-0.41415709618292185
+"('street_openness', 'mean_elevation')",0.41353383458646614
+"('junction_mean_nd', 'median_elevation')",-0.41293722363631924
+"('building_shared_walls_length', 'density')",0.4120300751879699
+"('building_elongation', 'elevation_range')",0.4096390187700172
+"('building_facade_ratio', 'density')",0.40751879699248117
+"('junction_cyclomatic', 'median_elevation')",-0.402406948352333
+"('junction_mean_nd', 'socioeconomic')",0.39866556996259467
+"('junction_degree', 'population')",0.3984962406015037
+"('junction_meanlen', 'mean_elevation')",0.3954887218045112
+"('junction_meanlen', 'flatness_score')",-0.393984962406015
+"('junction_mean_nd', 'mean_elevation')",-0.393984962406015
+"('street_mm_len', 'mean_elevation')",0.39097744360902253
+"('street_width', 'mean_elevation')",0.39097744360902253
+"('street_length', 'mean_elevation')",0.39097744360902253
+"('street_mm_len', 'socioeconomic')",-0.3902806344566893
+"('street_length', 'socioeconomic')",-0.3902806344566893
+"('street_linearity', 'socioeconomic')",0.3902806344566893
+"('junction_cyclomatic', 'socioeconomic')",0.3887561007283429
+"('street_compactness_weighted_axis', 'median_elevation')",0.3873636979466383
+"('street_longest_axis_length', 'median_elevation')",0.3873636979466383
+"('junction_cyclomatic', 'mean_elevation')",-0.38195488721804516
+"('street_linearity', 'area')",-0.3789473684210526
+"('street_width', 'median_elevation')",0.3783377477032214
+"('building_mean_interbuilding_distance', 'year founded')",0.37796759589538403
+"('building_courtyard_area', 'socioeconomic')",0.37579756403739806
+"('junction_meanlen', 'socioeconomic')",-0.3750352971732248
+"('street_length', 'flatness_score')",-0.3744360902255639
+"('street_mm_len', 'flatness_score')",-0.3744360902255639
+"('building_squareness', 'flatness_score')",-0.3699248120300751
+"('junction_node_density', 'growth rate')",-0.368223309151725
+"('street_compactness_weighted_axis', 'elevation_range')",0.3644582446409712
+"('street_longest_axis_length', 'elevation_range')",0.3644582446409712
+"('building_neighbour_distance', 'median_elevation')",0.3632944972975267
+"('building_facade_ratio', 'elevation_range')",-0.3599401672280666
+"('street_orientation', 'flatness_score')",-0.3578947368421052
+"('building_mean_interbuilding_distance', 'mean_elevation')",0.35639097744360904
+"('street_mm_len', 'year founded')",-0.34723852305836095
+"('street_length', 'year founded')",-0.34723852305836095
+"('junction_meanlen', 'year founded')",-0.3457020694165098
+"('junction_node_density_weighted', 'mean_elevation')",-0.3443609022556391
+"('junction_y', 'area')",-0.34285714285714286
+"('street_longest_axis_length', 'socioeconomic')",-0.34225782201377636
+"('street_compactness_weighted_axis', 'socioeconomic')",-0.34225782201377636
+"('building_perimeter', 'socioeconomic')",-0.33844648769291025
+"('junction_closeness', 'flatness_score')",-0.3383458646616541
+"('junction_cyclomatic', 'elevation_range')",-0.3358437543592421
+"('building_alignment', 'year founded')",-0.33494689392355176
+"('junction_mean_nd', 'elevation_range')",-0.33433772855494054
+"('junction_node_density_weighted', 'flatness_score')",0.33233082706766914
+"('building_courtyard_area', 'flatness_score')",-0.3278195488721804
+"('building_longest_axis_length', 'socioeconomic')",-0.32625021786613867
+"('junction_node_density', 'year founded')",0.3257281720724448
+"('building_elongation', 'population')",-0.32481203007518794
+"('building_neighbour_distance', 'year founded')",0.3241917184305937
+"('building_weighted_axis_compactness', 'socioeconomic')",-0.3224388835452726
+"('building_rectangularity', 'elevation_range')",-0.3207834963162267
+"('junction_degree', 'area')",0.3203007518796992
+"('junction_node_density', 'flatness_score')",0.3203007518796992
+"('building_orientation', 'flatness_score')",-0.31879699248120297
+"('street_compactness_weighted_axis', 'mean_elevation')",0.3157894736842105
+"('street_longest_axis_length', 'mean_elevation')",0.3157894736842105
+"('building_weighted_axis_compactness', 'population')",0.3157894736842105
+"('building_mean_interbuilding_distance', 'median_elevation')",0.3151560959993037
+"('street_openness', 'socioeconomic')",-0.31405394803936715
+"('building_alignment', 'area')",0.312781954887218
+"('building_square_compactness', 'area')",-0.31127819548872177
+"('street_width', 'flatness_score')",-0.306766917293233
+"('building_perimeter_wall', 'mean_elevation')",-0.30526315789473685
+"('junction_cluster', 'mean_elevation')",-0.30225563909774433
+"('junction_closeness', 'mean_elevation')",0.30225563909774433
+"('street_compactness_weighted_axis', 'area')",0.29774436090225564
+"('street_longest_axis_length', 'area')",0.29774436090225564
+"('building_mean_interbuilding_distance', 'elevation_range')",0.2966870834474022
+"('building_rectangularity', 'area')",-0.29624060150375936
+"('street_compactness_weighted_axis', 'flatness_score')",-0.29624060150375936
+"('street_openness', 'flatness_score')",-0.29624060150375936
+"('street_longest_axis_length', 'flatness_score')",-0.29624060150375936
+"('junction_node_density_weighted', 'elevation_range')",-0.29518105764310065
+"('building_courtyard_area', 'elevation_range')",0.2936750318387991
+"('building_courtyard_area', 'area')",0.29323308270676685
+"('building_shared_walls_length', 'mean_elevation')",-0.29323308270676685
+"('building_rectangularity', 'flatness_score')",0.29323308270676685
+"('junction_node_density', 'median_elevation')",-0.291839057870477
+"('junction_straightness', 'growth rate')",-0.29141599313234684
+"('street_width_dev', 'area')",-0.2902255639097744
+"('building_alignment', 'socioeconomic')",-0.2881368746574776
+"('building_corners', 'area')",0.28721804511278193
+"('junction_straightness', 'density')",-0.28721804511278193
+"('building_squareness', 'population')",0.28721804511278193
+"('street_length', 'growth rate')",0.28689791571944223
+"('street_mm_len', 'growth rate')",0.28689791571944223
+"('junction_edge_node_ratio', 'density')",0.2857142857142857
+"('building_facade_ratio', 'year founded')",0.28424392374246366
+"('building_elongation', 'area')",0.28120300751879695
+"('building_corners', 'elevation_range')",0.27861477379578375
+"('building_perimeter_wall', 'elevation_range')",-0.27560272218718074
+"('junction_cluster', 'median_elevation')",-0.27529148242421286
+"('building_adjacency', 'mean_elevation')",0.27518796992481204
+"('junction_meanlen', 'area')",0.27368421052631575
+"('junction_y', 'year founded')",-0.2734887482495056
+"('junction_y', 'socioeconomic')",0.2706047367814935
+"('street_compactness_weighted_axis', 'growth rate')",0.26731958026352226
+"('street_longest_axis_length', 'growth rate')",0.26731958026352226
+"('street_mm_len', 'area')",0.26616541353383455
+"('street_length', 'area')",0.26616541353383455
+"('junction_degree', 'median_elevation')",-0.26551336966051126
+"('building_perimeter_wall', 'median_elevation')",-0.26476120714022655
+"('junction_cluster', 'flatness_score')",0.2646616541353383
+"('building_courtyards_num', 'density')",0.2646616541353383
+"('building_convexity', 'area')",-0.26315789473684204
+"('building_squareness', 'area')",0.26165413533834586
+"('junction_meanlen', 'density')",-0.26165413533834586
+"('street_width', 'socioeconomic')",-0.26145753441141484
+"('building_facade_ratio', 'population')",0.25864661654135335
+"('junction_cyclomatic', 'flatness_score')",0.25864661654135335
+"('building_perimeter', 'population')",0.2571428571428572
+"('junction_meshedness', 'density')",0.2571428571428572
+"('building_circular_compactness', 'mean_elevation')",0.2571428571428572
+"('building_longest_axis_length', 'year founded')",0.25658775818914287
+"('junction_node_density_weighted', 'year founded')",0.25658775818914287
+"('junction_meshedness', 'growth rate')",-0.25602438673126077
+"('junction_y', 'density')",0.2556390977443609
+"('building_facade_ratio', 'flatness_score')",0.2556390977443609
+"('junction_degree', 'growth rate')",-0.25527137382910997
+"('building_square_compactness', 'population')",-0.2541353383458646
+"('junction_gamma', 'density')",0.2526315789473684
+"('junction_mean_nd', 'flatness_score')",0.2526315789473684
+"('junction_gamma', 'area')",0.25112781954887214
+"('building_fractal_dimension', 'area')",0.25112781954887214
+"('building_courtyard_area', 'growth rate')",-0.24924727061190383
+"('building_longest_axis_length', 'population')",0.24812030075187969
+"('junction_node_density', 'elevation_range')",-0.24698823190545158
+"('building_neighbour_distance', 'flatness_score')",-0.24661654135338343
+"('street_length', 'density')",-0.24661654135338343
+"('building_weighted_axis_compactness', 'area')",0.24661654135338343
+"('building_elongation', 'flatness_score')",-0.24661654135338343
+"('street_mm_len', 'density')",-0.24661654135338343
+"('junction_node_density', 'population')",-0.24661654135338343
+"('building_circular_compactness', 'socioeconomic')",0.24621219712795045
+"('building_facade_ratio', 'mean_elevation')",-0.24511278195488717
+"('junction_meshedness', 'area')",0.24511278195488717
+"('junction_meanlen', 'growth rate')",0.24397618029684848
+"('building_facade_ratio', 'median_elevation')",-0.2399398439708303
+"('building_corners', 'flatness_score')",-0.23909774436090225
+"('junction_gamma', 'growth rate')",-0.23569303837319006
+"('junction_closeness', 'median_elevation')",0.23542686884912187
+"('junction_straightness', 'year founded')",0.23354095356137558
+"('junction_y', 'growth rate')",-0.2304219480581347
+"('building_squareness', 'growth rate')",0.2304219480581347
+"('building_convexity', 'density')",0.2300751879699248
+"('building_longest_axis_length', 'density')",0.22857142857142856
+"('building_perimeter', 'elevation_range')",-0.2274098964495316
+"('street_orientation', 'socioeconomic')",-0.22715552552361995
+"('junction_edge_node_ratio', 'growth rate')",-0.2259038706452301
+"('junction_mean_nd', 'growth rate')",-0.22515085774307933
+"('junction_x', 'year founded')",-0.22432223171026863
+"('junction_straightness', 'area')",0.22406015037593985
+"('building_perimeter', 'density')",0.22406015037593985
+"('building_adjacency', 'median_elevation')",0.22339226852456615
+"('street_orientation', 'growth rate')",-0.2213857932323255
+"('building_shared_walls_length', 'median_elevation')",-0.22113578096371195
+"('junction_node_density', 'mean_elevation')",-0.21954887218045113
+"('building_fractal_dimension', 'population')",0.21954887218045113
+"('street_longest_axis_length', 'population')",0.21954887218045113
+"('street_compactness_weighted_axis', 'population')",0.21954887218045113
+"('junction_cluster', 'year founded')",0.21817641714286398
+"('junction_cyclomatic', 'year founded')",-0.21817641714286398
+"('building_perimeter_wall', 'socioeconomic')",-0.2180083231535413
+"('building_convexity', 'elevation_range')",-0.21536169001511937
+"('junction_degree', 'mean_elevation')",-0.2150375939849624
+"('junction_node_density', 'socioeconomic')",0.21267245510432875
+"('building_facade_ratio', 'growth rate')",-0.21234963840651627
+"('building_perimeter', 'year founded')",0.2120306025754594
+"('building_courtyards_num', 'socioeconomic')",0.20962338764763583
+"('junction_y', 'median_elevation')",-0.2075968555985867
+"('building_rectangularity', 'density')",0.20751879699248119
+"('building_circular_compactness', 'area')",-0.20751879699248119
+"('junction_edge_node_ratio', 'median_elevation')",-0.2053403680377325
+"('junction_x', 'growth rate')",0.2048195093850086
+"('building_longest_axis_length', 'elevation_range')",-0.2048195093850086
+"('junction_cyclomatic', 'growth rate')",-0.2048195093850086
+"('junction_edge_node_ratio', 'area')",0.2045112781954887
+"('junction_straightness', 'socioeconomic')",0.19971391841338398
+"('junction_mean_nd', 'year founded')",-0.19666606615694782
+"('junction_y', 'mean_elevation')",-0.19548872180451127
+"('junction_cluster', 'elevation_range')",-0.19427732875489787
+"('building_street_alignment', 'density')",-0.193984962406015
+"('building_corners', 'density')",-0.19248120300751878
+"('building_alignment', 'density')",-0.19248120300751878
+"('junction_meshedness', 'year founded')",-0.19205670523139434
+"('junction_closeness', 'elevation_range')",0.19126527714629482
+"('junction_gamma', 'year founded')",-0.1874473443058409
+"('building_orientation', 'growth rate')",-0.1867471997333902
+"('building_circular_compactness', 'year founded')",0.18591089066398975
+"('building_rectangularity', 'median_elevation')",-0.18578414251032943
+"('street_linearity', 'growth rate')",-0.18524117392908865
+"('building_corners', 'growth rate')",0.1844881610269379
+"('street_compactness_weighted_axis', 'density')",-0.18345864661654135
+"('street_longest_axis_length', 'density')",-0.18345864661654135
+"('building_squareness', 'socioeconomic')",-0.18065724680905343
+"('building_perimeter_wall', 'flatness_score')",0.1789473684210526
+"('building_street_alignment', 'year founded')",-0.17822862245473395
+"('building_squareness', 'median_elevation')",0.17600602974662788
+"('building_convexity', 'mean_elevation')",-0.1744360902255639
+"('building_courtyards_num', 'population')",0.1744360902255639
+"('building_orientation', 'socioeconomic')",-0.17379684503149445
+"('building_convexity', 'median_elevation')",-0.17374954218577365
+"('building_convexity', 'flatness_score')",0.17293233082706763
+"('junction_edge_node_ratio', 'year founded')",-0.17208280788732935
+"('junction_node_density', 'area')",-0.17142857142857143
+"('junction_edge_node_ratio', 'mean_elevation')",-0.16992481203007515
+"('building_neighbour_distance', 'socioeconomic')",-0.16922324384645512
+"('building_corners', 'median_elevation')",0.16848440454378052
+"('street_width_dev', 'flatness_score')",-0.16842105263157892
+"('building_circular_compactness', 'density')",-0.16842105263157892
+"('building_shared_walls_length', 'year founded')",-0.16747344696177588
+"('building_courtyards_num', 'median_elevation')",-0.16698007950321106
+"('building_rectangularity', 'mean_elevation')",-0.16691729323308271
+"('building_corners', 'mean_elevation')",0.16691729323308271
+"('building_courtyard_area', 'year founded')",-0.16593699331992473
+"('building_circular_compactness', 'median_elevation')",0.16397142942207213
+"('building_rectangularity', 'growth rate')",-0.16340379976671643
+"('building_perimeter', 'mean_elevation')",-0.16240601503759397
+"('building_courtyards_num', 'mean_elevation')",-0.1609022556390977
+"('building_rectangularity', 'population')",-0.15939849624060148
+"('building_elongation', 'socioeconomic')",0.1577892408838568
+"('junction_cluster', 'density')",0.15488721804511277
+"('building_street_alignment', 'area')",0.15488721804511277
+"('building_squareness', 'mean_elevation')",0.1533834586466165
+"('building_corners', 'population')",0.1518796992481203
+"('junction_y', 'population')",-0.1518796992481203
+"('building_courtyard_area', 'population')",0.1518796992481203
+"('building_adjacency', 'flatness_score')",0.15037593984962402
+"('building_mean_interbuilding_distance', 'socioeconomic')",-0.14864203851377814
+"('building_circular_compactness', 'elevation_range')",0.14759052882155033
+"('building_fractal_dimension', 'socioeconomic')",-0.14635523792125846
+"('building_square_compactness', 'density')",0.14586466165413534
+"('building_shared_walls_length', 'growth rate')",0.14307245140864572
+"('junction_x', 'density')",-0.14285714285714285
+"('building_perimeter', 'median_elevation')",-0.14215871633381483
+"('building_longest_axis_length', 'mean_elevation')",-0.13984962406015036
+"('building_orientation', 'year founded')",-0.1398172814084551
+"('building_facade_ratio', 'area')",-0.13834586466165413
+"('building_mean_interbuilding_distance', 'flatness_score')",-0.13684210526315788
+"('building_shared_walls_length', 'flatness_score')",-0.13684210526315788
+"('building_square_compactness', 'socioeconomic')",0.13415896809448694
+"('building_alignment', 'population')",0.13383458646616542
+"('building_neighbour_distance', 'population')",-0.13383458646616542
+"('building_perimeter', 'flatness_score')",0.13233082706766916
+"('building_square_compactness', 'growth rate')",-0.13102424497423343
+"('building_fractal_dimension', 'growth rate')",0.12876520626778115
+"('junction_cluster', 'area')",-0.12481203007518797
+"('building_facade_ratio', 'socioeconomic')",-0.12424949886023504
+"('building_weighted_axis_compactness', 'growth rate')",-0.12349411595272579
+"('building_circular_compactness', 'flatness_score')",-0.12330827067669171
+"('junction_degree', 'year founded')",-0.1229162913480924
+"('building_longest_axis_length', 'median_elevation')",-0.12260249080641171
+"('junction_closeness', 'density')",-0.12180451127819547
+"('building_mean_interbuilding_distance', 'population')",-0.12180451127819547
+"('building_longest_axis_length', 'growth rate')",-0.12048206434412272
+"('junction_x', 'population')",-0.12030075187969923
+"('street_width', 'year founded')",0.11677047678068779
+"('building_neighbour_distance', 'growth rate')",0.11521097402906735
+"('junction_meshedness', 'median_elevation')",-0.11508086560356438
+"('building_longest_axis_length', 'flatness_score')",0.11428571428571428
+"('building_circular_compactness', 'growth rate')",-0.1137049482247658
+"('junction_degree', 'elevation_range')",-0.11295193532261505
+"('building_weighted_axis_compactness', 'elevation_range')",-0.11295193532261505
+"('street_width_dev', 'population')",0.11278195488721804
+"('building_perimeter_wall', 'area')",0.11127819548872178
+"('building_perimeter', 'growth rate')",-0.11069289661616274
+"('junction_y', 'elevation_range')",-0.10993988371401198
+"('building_adjacency', 'year founded')",0.10908820857143199
+"('building_weighted_axis_compactness', 'flatness_score')",0.10827067669172932
+"('junction_meanlen', 'population')",0.10676691729323308
+"('building_adjacency', 'growth rate')",-0.10542180630110738
+"('building_convexity', 'growth rate')",-0.10542180630110738
+"('building_courtyard_area', 'mean_elevation')",0.10526315789473684
+"('building_fractal_dimension', 'density')",-0.10375939849624059
+"('street_mm_len', 'population')",0.10375939849624059
+"('street_length', 'population')",0.10375939849624059
+"('junction_gamma', 'median_elevation')",-0.09853329015730021
+"('building_squareness', 'year founded')",-0.09833303307847391
+"('junction_node_density_weighted', 'density')",0.09774436090225563
+"('building_rectangularity', 'socioeconomic')",0.0937588242933062
+"('building_mean_interbuilding_distance', 'growth rate')",-0.0911145611602428
+"('junction_x', 'area')",0.09022556390977443
+"('building_adjacency', 'area')",0.08872180451127819
+"('street_openness', 'year founded')",0.08604140394366468
+"('building_weighted_axis_compactness', 'year founded')",0.08604140394366468
+"('street_width', 'population')",0.08571428571428572
+"('building_shared_walls_length', 'socioeconomic')",-0.08461162192322756
+"('junction_edge_node_ratio', 'elevation_range')",-0.0843374450408859
+"('building_courtyards_num', 'flatness_score')",-0.08421052631578946
+"('street_linearity', 'population')",0.08270676691729321
+"('building_fractal_dimension', 'elevation_range')",0.08132539343228283
+"('junction_degree', 'flatness_score')",0.08120300751879699
+"('building_convexity', 'population')",-0.08120300751879699
+"('building_squareness', 'density')",-0.08120300751879699
+"('building_courtyards_num', 'year founded')",-0.07989558937626004
+"('junction_meshedness', 'mean_elevation')",-0.0781954887218045
+"('building_elongation', 'year founded')",0.0752862284507066
+"('building_courtyards_num', 'area')",0.07518796992481201
+"('building_perimeter_wall', 'year founded')",-0.07374977480885543
+"('building_fractal_dimension', 'flatness_score')",-0.07368421052631578
+"('building_convexity', 'year founded')",-0.07221332116700427
+"('junction_closeness', 'socioeconomic')",0.07012855150393636
+"('junction_node_density_weighted', 'area')",-0.06917293233082707
+"('junction_gamma', 'mean_elevation')",-0.06766917293233082
+"('junction_degree', 'density')",0.06616541353383458
+"('street_width_dev', 'mean_elevation')",-0.06466165413533834
+"('building_square_compactness', 'elevation_range')",-0.06325308378066442
+"('building_perimeter_wall', 'growth rate')",-0.06325308378066442
+"('street_width_dev', 'growth rate')",0.06325308378066442
+"('street_width_dev', 'elevation_range')",0.061747057976362894
+"('building_square_compactness', 'flatness_score')",0.05413533834586466
+"('junction_cyclomatic', 'area')",0.05263157894736842
+"('junction_mean_nd', 'area')",0.05263157894736842
+"('junction_straightness', 'median_elevation')",-0.051147051379361944
+"('building_orientation', 'population')",-0.051127819548872175
+"('street_orientation', 'population')",-0.051127819548872175
+"('building_square_compactness', 'year founded')",-0.05070297018108811
+"('building_weighted_axis_compactness', 'mean_elevation')",-0.04962406015037594
+"('street_openness', 'population')",-0.048120300751879695
+"('building_adjacency', 'socioeconomic')",-0.04573601185039328
+"('street_openness', 'growth rate')",-0.045180774129046024
+"('junction_gamma', 'flatness_score')",-0.045112781954887216
+"('building_corners', 'socioeconomic')",-0.04116241066535395
+"('junction_meshedness', 'flatness_score')",-0.04060150375939849
+"('building_courtyard_area', 'median_elevation')",0.03911245105480619
+"('street_width_dev', 'socioeconomic')",-0.03887561007283428
+"('junction_cluster', 'population')",0.03609022556390977
+"('building_rectangularity', 'year founded')",0.03533843376257657
+"('junction_cluster', 'socioeconomic')",-0.03430200888779495
+"('street_width', 'growth rate')",0.03388558059678451
+"('building_courtyards_num', 'elevation_range')",-0.03313256769463375
+"('junction_node_density', 'density')",-0.03308270676691729
+"('building_alignment', 'growth rate')",0.03237955479248298
+"('junction_straightness', 'population')",0.03157894736842105
+"('building_fractal_dimension', 'median_elevation')",0.030838663331674118
+"('junction_straightness', 'elevation_range')",0.02710846447742761
+"('building_courtyards_num', 'growth rate')",-0.026355451575276845
+"('building_square_compactness', 'median_elevation')",-0.02482136316939624
+"('building_weighted_axis_compactness', 'median_elevation')",-0.024069200649111507
+"('junction_straightness', 'mean_elevation')",0.024060150375939848
+"('building_shared_walls_length', 'area')",-0.024060150375939848
+"('street_orientation', 'year founded')",0.023046804627767325
+"('building_convexity', 'socioeconomic')",0.02286800592519664
+"('building_courtyard_area', 'density')",0.022556390977443608
+"('junction_edge_node_ratio', 'flatness_score')",0.016541353383458645
+"('building_street_alignment', 'population')",0.015037593984962403
+"('building_weighted_axis_compactness', 'density')",0.015037593984962403
+"('junction_meshedness', 'elevation_range')",-0.013554232238713805
+"('building_perimeter', 'area')",0.013533834586466165
+"('building_square_compactness', 'mean_elevation')",0.013533834586466165
+"('building_fractal_dimension', 'mean_elevation')",-0.013533834586466165
+"('building_elongation', 'growth rate')",0.011295193532261506
+"('junction_closeness', 'growth rate')",0.010542180630110738
+"('junction_gamma', 'elevation_range')",-0.010542180630110738
+"('junction_straightness', 'flatness_score')",0.010526315789473682
+"('street_width_dev', 'median_elevation')",-0.009778112763701547
+"('building_fractal_dimension', 'year founded')",0.007682268209255775
+"('junction_y', 'flatness_score')",0.007518796992481202
+"('building_adjacency', 'elevation_range')",0.006024103217206136
+"('street_linearity', 'year founded')",-0.0046093609255534644
+"('junction_x', 'socioeconomic')",-0.004573601185039327
+"('building_longest_axis_length', 'area')",-0.004511278195488721
+"('building_street_alignment', 'growth rate')",0.003765064510753835
+"('junction_node_density_weighted', 'population')",0.003007518796992481
+"('building_corners', 'year founded')",0.0
+"('building_shared_walls_length', 'elevation_range')",0.0
+"('building_adjacency', 'num_sampled_points')",
+"('building_alignment', 'num_sampled_points')",
+"('building_circular_compactness', 'num_sampled_points')",
+"('building_convexity', 'num_sampled_points')",
+"('building_corners', 'num_sampled_points')",
+"('building_courtyard_area', 'num_sampled_points')",
+"('building_courtyards_num', 'num_sampled_points')",
+"('building_elongation', 'num_sampled_points')",
+"('building_facade_ratio', 'num_sampled_points')",
+"('building_fractal_dimension', 'num_sampled_points')",
+"('building_longest_axis_length', 'num_sampled_points')",
+"('building_mean_interbuilding_distance', 'num_sampled_points')",
+"('building_neighbour_distance', 'num_sampled_points')",
+"('building_orientation', 'num_sampled_points')",
+"('building_perimeter', 'num_sampled_points')",
+"('building_perimeter_wall', 'num_sampled_points')",
+"('building_rectangularity', 'num_sampled_points')",
+"('building_shared_walls_length', 'num_sampled_points')",
+"('building_square_compactness', 'num_sampled_points')",
+"('building_squareness', 'num_sampled_points')",
+"('building_street_alignment', 'num_sampled_points')",
+"('building_weighted_axis_compactness', 'num_sampled_points')",
+"('junction_closeness', 'num_sampled_points')",
+"('junction_cluster', 'num_sampled_points')",
+"('junction_cyclomatic', 'num_sampled_points')",
+"('junction_degree', 'num_sampled_points')",
+"('junction_edge_node_ratio', 'num_sampled_points')",
+"('junction_gamma', 'num_sampled_points')",
+"('junction_mean_nd', 'num_sampled_points')",
+"('junction_meanlen', 'num_sampled_points')",
+"('junction_meshedness', 'num_sampled_points')",
+"('junction_node_density', 'num_sampled_points')",
+"('junction_node_density_weighted', 'num_sampled_points')",
+"('junction_straightness', 'num_sampled_points')",
+"('junction_x', 'num_sampled_points')",
+"('junction_y', 'num_sampled_points')",
+"('street_compactness_weighted_axis', 'num_sampled_points')",
+"('street_length', 'num_sampled_points')",
+"('street_linearity', 'num_sampled_points')",
+"('street_longest_axis_length', 'num_sampled_points')",
+"('street_mm_len', 'num_sampled_points')",
+"('street_openness', 'num_sampled_points')",
+"('street_orientation', 'num_sampled_points')",
+"('street_width', 'num_sampled_points')",
+"('street_width_dev', 'num_sampled_points')",

@@ -9,7 +9,7 @@ local_crs = 'EPSG:2039'
 network_type = 'drive'
 
 streets = load_roads_from_osm(place, network_type=network_type)
-streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_nodes=True)
+streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
 
 # buildings = load_buildings_from_osm(place)
 # buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs, )
