@@ -16,6 +16,8 @@ def read_config(configfile: str | PosixPath) -> dict | configparser.ConfigParser
     params = {}
     params['data_dir'] = config.get('Paths','data_dir', fallback='./')
     params['output_dir'] = config.get('Paths', 'output_dir', fallback='./')
+    params['gdb_bld_path'] = config.get('Paths', 'gdb_bld_path', fallback='./')
+
     
     # root_folder = config['Paths']['root_folder']  
 
