@@ -51,6 +51,3 @@ def plot_clusters(buildings):
 
     # Display the plot
     plt.show()
-
-    # buildings.plot( "cluster", categorical=True, figsize=(16, 16), legend=True ).set_axis_off()
-
