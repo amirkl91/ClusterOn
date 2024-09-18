@@ -3,20 +3,29 @@ import preprocess as pp
 from data_input import load_buildings_from_osm, load_roads_from_osm
 import metrics
 import merge_dfs as md
+import geopandas as gpd
 
-verbose=True
+verbose = True
 t0 = time()
-place = 'Jerusalem'
-local_crs = 'EPSG:2039'
-network_type = 'drive'
+place = "katzrin"
+local_crs = "EPSG:2039"
+network_type = "drive"
 
 ### Get dataframes
 streets = load_roads_from_osm(place, network_type=network_type)
-streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
+streets, junctions = pp.get_streets(
+    streets=streets, local_crs=local_crs, get_juncions=True
+)
 buildings = load_buildings_from_osm(place)
-buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs, )
-tessellations = pp.get_tessellation(buildings=buildings, streets=streets, 
-                                        tess_mode='morphometric', clim='adaptive')
+buildings = pp.get_buildings(
+    buildings=buildings,
+    streets=streets,
+    junctions=junctions,
+    local_crs=local_crs,
+)
+tessellations = pp.get_tessellation(
+    buildings=buildings, streets=streets, tess_mode="morphometric", clim="adaptive"
+)
 
 ### Get metrics
 metrics.generate_building_metrics(buildings)
@@ -29,3 +38,17 @@ junctions, streets = metrics.generate_junctions_metrics(streets)
 merged = md.merge_all_metrics(tessellations, buildings, streets, junctions)
 metrics_with_percentiles = md.compute_percentiles(merged, queen_3)
 standardized = md.standardize_df(metrics_with_percentiles)
+
+# david
+# Check if standardized DataFrame has a geometry column
+geometry_column = merged["geometry"]
+
+# Step 2: Merge the geometry column into the standardized DataFrame
+standardized_with_geometry = standardized.copy()
+standardized_with_geometry["geometry"] = geometry_column
+
+# Step 3: Convert to GeoDataFrame
+gdf = gpd.GeoDataFrame(standardized_with_geometry, geometry="geometry", crs=local_crs)
+
+# Now you can save it to a file
+gdf.to_file("../gpkg_files/katzrin.gpkg", layer="nodes", driver="GPKG")

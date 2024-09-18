@@ -26,6 +26,9 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
 from scipy.stats import entropy
+import shap
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+import os
 
 local_crs = "EPSG:2039"
 
@@ -47,7 +50,7 @@ for global analysis:
 
 def analyze_gdf(gdf, classification_column):
     cluster_results = {}
-
+    print(gsf["lof_score"])
     # Loop over each cluster in the classification column
     for cluster in gdf[classification_column].unique():
         cluster_rows = gdf[gdf[classification_column] == cluster]
@@ -55,11 +58,10 @@ def analyze_gdf(gdf, classification_column):
             columns=[classification_column]
         )  # Drop classification column
         cluster_results[cluster] = analyze_cluster(cluster_rows)
-
+        # plot_cluster_summary(cluster_rows, cluster_results[cluster], cluster)
+        plot_flexibility_score(cluster_rows, cluster_results[cluster], cluster)
     # Global Analysis (Optional): Apply SVD over the whole dataset
-    numeric_columns = gdf.select_dtypes(
-        include=[float, int]
-    ).columns  # Only numeric columns
+    numeric_columns = gdf.select_dtypes(include=[float, int]).columns
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(gdf[numeric_columns])
 
@@ -70,6 +72,12 @@ def analyze_gdf(gdf, classification_column):
     # Store global SVD components to compare across clusters
     global_svd_components = pd.DataFrame(svd.components_, columns=numeric_columns)
 
+    # Supervised analysis to find the leading metrics for classification
+    supervised_importances = supervised_leading_metrics(gdf, classification_column)
+
+    # Cluster similarity analysis
+    similarity_results = cluster_similarity_analysis(gdf, classification_column)
+    print(similarity_results)
     # Compare clusters by their outlier ratios
     highest_outlier_cluster = max(
         cluster_results, key=lambda x: cluster_results[x]["outlier_ratio"]
@@ -78,19 +86,32 @@ def analyze_gdf(gdf, classification_column):
         cluster_results, key=lambda x: cluster_results[x]["outlier_ratio"]
     )
 
+    # Closest clusters based on centroid distances
+    # closest_clusters = similarity_results["closest_clusters"]
+    # cluster_names = gdf[classification_column].unique()
+
+    # closest_cluster_1 = cluster_names[closest_clusters[0]]
+    # closest_cluster_2 = cluster_names[closest_clusters[1]]
+
     print(
         f"Cluster with highest outlier ratio: {highest_outlier_cluster}, Ratio: {cluster_results[highest_outlier_cluster]['outlier_ratio']:.2f}"
     )
     print(
         f"Cluster with lowest outlier ratio: {lowest_outlier_cluster}, Ratio: {cluster_results[lowest_outlier_cluster]['outlier_ratio']:.2f}"
     )
+    # print(f"Closest clusters: {closest_cluster_1} and {closest_cluster_2}")
 
     # Global summary to identify unique clusters and key metrics
     global_summary = {
         "svd_components": global_svd_components,
+        "supervised_leading_metrics": supervised_importances,
         "highest_outlier_cluster": highest_outlier_cluster,
         "lowest_outlier_cluster": lowest_outlier_cluster,
-        "cluster_results": cluster_results,
+        # "cluster_results": cluster_results,
+        # "silhouette_avg": similarity_results["silhouette_avg"],
+        # "db_score": similarity_results["db_score"],
+        # "closest_clusters": (closest_cluster_1, closest_cluster_2),
+        # "cluster_distance_matrix": similarity_results["cluster_distance_matrix"],
     }
 
     return global_summary
@@ -98,7 +119,6 @@ def analyze_gdf(gdf, classification_column):
 
 def analyze_cluster(gdf):
     result = {}
-
     # 1. Basic statistics: mean, variance, min, max
     numeric_columns = gdf.select_dtypes(
         include=[float, int]
@@ -116,6 +136,10 @@ def analyze_cluster(gdf):
         | (gdf[numeric_columns] > (Q3 + 1.5 * IQR))
     ).any(axis=1)
     result["outliers"] = gdf[outliers]  # Store rows that are outliers
+
+    # 2a. Calculate the outlier ratio (number of outliers / total points)
+    outlier_ratio = outliers.sum() / len(gdf)
+    result["outlier_ratio"] = outlier_ratio  # Store the outlier ratio
 
     # 3. Identify which metrics contributed most to the outliers
     metrics_influence = (gdf[numeric_columns] > (Q3 + 1.5 * IQR)) | (
@@ -155,7 +179,7 @@ def analyze_cluster(gdf):
     return result
 
 
-def plot_gdf_analysis(gdf, results, cluster_number):
+def plot_cluster_analysis(gdf, results, cluster_number):
     # Get the numeric columns again
     numeric_columns = gdf.select_dtypes(include=[float, int]).columns
 
@@ -246,9 +270,13 @@ def plot_gdf_analysis(gdf, results, cluster_number):
     plt.show()
 
 
-def plot_summary(results, cluster_name):
-    # 8. Summary Plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+
+
+def plot_cluster_summary(gdf, results, cluster_name):
+    fig, ax = plt.subplots(figsize=(12, 8))
 
     # Display number of outliers
     num_outliers = len(results["outliers"])
@@ -260,7 +288,7 @@ def plot_summary(results, cluster_name):
         pca_components.apply(lambda x: abs(x)).sum(axis=1).nsmallest(2).index.tolist()
     )
 
-    # Correlation analysis summary (e.g., correlation matrix heatmap)
+    # Correlation analysis summary
     corr_summary = results["correlation_matrix"].abs().mean().mean()
 
     # Extract metrics with the highest and lowest SD
@@ -274,6 +302,7 @@ def plot_summary(results, cluster_name):
 
     # Create the summary text
     summary_text = (
+        f"Cluster: {cluster_name}\n"
         f"Number of IQR outliers: {num_outliers}\n"
         f"Number of LOF outliers: {num_lof_outliers}\n"
         f"More Consistent Metrics from PCA: {', '.join(consistent_metrics)}\n"
@@ -285,33 +314,123 @@ def plot_summary(results, cluster_name):
         f"Metrics with Lowest Mean: {', '.join(lowest_mean_metrics)}"
     )
 
+    # Improve the text display on the plot
     ax.text(0.1, 0.5, summary_text, fontsize=12, ha="left", va="center", wrap=True)
     ax.set_axis_off()
-    plt.title(f"Summary of Analysis for Cluster: {cluster_name}")
+    plt.title(f"Summary of Analysis for Cluster: {cluster_name}", fontsize=16)
+    plt.show()
+
+
+def entropy_weighting(cluster_gdf):
+    numeric_columns = cluster_gdf.select_dtypes(include=[float, int]).columns
+    n = len(cluster_gdf)
+    entropy = {}
+
+    for col in numeric_columns:
+        # Normalize the values between 0 and 1
+        normalized_col = (cluster_gdf[col] - cluster_gdf[col].min()) / (
+            cluster_gdf[col].max() - cluster_gdf[col].min()
+        )
+
+        # Avoid log(0) by replacing 0 with a small value
+        normalized_col[normalized_col == 0] = 1e-10
+
+        # Calculate probabilities for each value
+        p = normalized_col / normalized_col.sum()
+
+        # Calculate entropy for this column
+        entropy_col = -np.sum(p * np.log(p)) / np.log(n)
+        entropy[col] = entropy_col
+
+    return pd.Series(entropy).sort_values(ascending=False)
+
+
+def plot_flexibility_score(gdf, results, cluster_name):
+    # Extract metrics' standard deviations (SDs)
+    stats = results["basic_stats"]
+    stds = stats["std"]  # Extract the 'std' column from the stats DataFrame
+    sorted_stds = stds.sort_values()
+
+    # Calculate entropy weights
+    entropy_weights = entropy_weighting(gdf)
+    sorted_entropy = entropy_weights.sort_values()
+
+    # Normalize both SD and entropy for better combination
+    normalized_stds = (sorted_stds - sorted_stds.min()) / (
+        sorted_stds.max() - sorted_stds.min()
+    )
+    normalized_entropy = (sorted_entropy - sorted_entropy.min()) / (
+        sorted_entropy.max() - sorted_entropy.min()
+    )
+
+    # Combine both normalized metrics to get a flexibility score
+    flexibility_score = (
+        normalized_stds + normalized_entropy
+    ) / 2  # Averaging both for flexibility score
+
+    # Plot the flexibility score
+    plt.figure(figsize=(14, 8))
+    bars = plt.bar(
+        flexibility_score.index, flexibility_score, color="skyblue", width=0.8
+    )
+
+    # Find indices of the top 2 most flexible and bottom 2 strictest metrics
+    top_2_flexible_indices = flexibility_score.nlargest(2).index
+    bottom_2_strict_indices = flexibility_score.nsmallest(2).index
+
+    # Highlight the top 2 flexible (green) and bottom 2 strict (red) metrics
+    for idx in top_2_flexible_indices:
+        bars[flexibility_score.index.get_loc(idx)].set_color("green")  # Top 2 flexible
+    for idx in bottom_2_strict_indices:
+        bars[flexibility_score.index.get_loc(idx)].set_color("red")  # Bottom 2 strict
+
+    # Additionally, highlight all metrics with flexibility score close to 0 (threshold)
+    threshold = 0.05
+    close_to_zero_indices = flexibility_score[flexibility_score < threshold].index
+    for idx in close_to_zero_indices:
+        bars[flexibility_score.index.get_loc(idx)].set_color("red")
+
+        # Add a minimum height to make them visible
+        bar_height = max(flexibility_score[idx], 0.02)
+        bars[flexibility_score.index.get_loc(idx)].set_height(bar_height)
+
+        # Add text labels above the bars to show their actual values
+        plt.text(
+            flexibility_score.index.get_loc(idx),
+            bar_height + 0.01,
+            f"{flexibility_score[idx]:.0f}",
+            ha="center",
+            fontsize=10,
+            color="black",
+        )
+
+    # Rotate x-tick labels for better readability
+    plt.xticks(rotation=45, ha="right")
+
+    # Add title and labels
+    plt.title(f"Flexibility Score of Metrics for Cluster {cluster_name}", fontsize=16)
+    plt.xlabel("Metrics")
+    plt.ylabel("Flexibility Score (Avg of SD and Entropy)")
+
+    # Show the plot
+    plt.tight_layout()
     plt.show()
 
 
 def unsupervised_leading_metrics(gdf):
-
     group_leading_metrics = {}
-
     # Standardize the features
     scaler = StandardScaler()
     features = gdf.drop(columns=["geometry"])
-
     # Standardize the data
     scaled_features = scaler.fit_transform(features)
-
     # Apply PCA
     pca = PCA(n_components=1)
     pca.fit(scaled_features)
-
     # Get the principal components
     components = pca.components_
-
     # Create a DataFrame of components with feature names
     leading_metrics = pd.DataFrame(components, columns=features.columns)
-
     # Sort metrics by their absolute contribution to the first component
     sorted_metrics = leading_metrics.iloc[0].abs().sort_values(ascending=False).head(5)
     group_leading_metrics["all_data"] = sorted_metrics
@@ -323,7 +442,7 @@ def supervised_leading_metrics(gdf, classification_column):
     features = gdf.drop(columns=[classification_column, "geometry"])
     target = gdf[classification_column]
 
-    # Standardize the features (optional, but often helpful)
+    # Standardize the features
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(features)
 
@@ -339,38 +458,93 @@ def supervised_leading_metrics(gdf, classification_column):
     print("Overall leading metrics for classification:")
     print(feature_importances.head(10))  # Top 10 most important metrics
 
+    # Plot bar chart for feature importances
+    plt.figure(figsize=(10, 6))
+    feature_importances.head(10).plot(
+        kind="bar", color="skyblue"
+    )  # Plot the top 10 features
+    plt.title("Top 10 metrics that influence the classification the most")
+    plt.ylabel("Feature Importance")
+    plt.xlabel("Metrics")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    plt.show()
+
     return feature_importances
 
 
+def cluster_similarity_analysis(gdf, classification_column):
+    features = gdf.drop(columns=[classification_column, "geometry"])
+    target = gdf[classification_column]
+    # Standardize features
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(features)
+    # Silhouette Score
+    silhouette_avg = silhouette_score(scaled_features, target)
+    # Davies-Bouldin Index
+    db_score = davies_bouldin_score(scaled_features, target)
+    print(f"Silhouette Score: {silhouette_avg}")
+    print(f"Davies-Bouldin Score: {db_score}")
+
+    return silhouette_avg, db_score
+
+
 if __name__ == "__main__":
-    data = {
-        "building_height": [10, 12, 8, 15],
-        "Convexity": [5, 9, 2, 2],
-        "Compactness": [4, 33, 2, 11],
-        "floor_aqrea": [33, 100, 200, 2],
-        "orientation": [200, 250, 20, 10],
-        "building_ERI": [100, 150, 120, 130],
-        "building_area": [200, 250, 180, 300],
-        "area_classification": ["1", "1", "2", "2"],
-        "geometry": [Point(1, 2), Point(2, 3), Point(3, 4), Point(4, 5)],
-    }
-
-    gdf = gpd.GeoDataFrame(data, geometry="geometry")
-
-    file_path = "../gpkg_files/simple_clustered_buildings.gpkg"
-
-    # Print the full path
-    # Load the GeoPackage as a GeoDataFrame
+    file_path = "../gpkg_files/modiin.gpkg"
     gdf = gpd.read_file(file_path)
-    classification_column = "area_classification"
-    # leading_metrics_per_group = unsupervised_leading_metrics(gdf, classification_column, n_components=1)
-    # top_metrics_per_group = supervised_leading_metrics(gdf, classification_column)
-    gdf = gdf.drop(columns=["street_index"])
-    gdf = gdf.dropna()
-    cluster_number = 1
-    cluster_1_rows = gdf[gdf["cluster"] == cluster_number]
-    cluster_1_rows = cluster_1_rows.drop(columns=["cluster"])
-    results = analyze_cluster(cluster_1_rows)
+    print("gdf column number:", len(gdf.columns))
+    threshold = len(gdf) * 0.5
 
-    plot_gdf_analysis(gdf, results, cluster_number)
-    plot_summary(results, cluster_number)
+    # Step 1: Remove columns with more than 50% NaNs
+    gdf = gdf.dropna(axis=1, thresh=threshold)
+
+    # Step 2: Replace remaining NaNs with 0 in the remaining columns
+    gdf.fillna(0, inplace=True)
+
+    # Output the cleaned GeoDataFrame
+    print("Columns removed due to more than 50% NaNs:")
+    print(set(gdf.columns) - set(gdf.columns))
+    # Optionally, print the cleaned GeoDataFrame if needed
+    gdf.drop(columns=["street_index", "junction_index"], inplace=True)
+    analyze_gdf(gdf, "cluster")
+
+    # data = {
+    #     "building_height": [10, 12, 8, 15],
+    #     "Convexity": [5, 9, 2, 2],
+    #     "Compactness": [4, 33, 2, 11],
+    #     "floor_aqrea": [33, 100, 200, 2],
+    #     "orientation": [200, 250, 20, 10],
+    #     "building_ERI": [100, 150, 120, 130],
+    #     "building_area": [200, 250, 180, 300],
+    #     "area_classification": ["1", "1", "2", "2"],
+    #     "geometry": [Point(1, 2), Point(2, 3), Point(3, 4), Point(4, 5)],
+    # }
+
+    # gdf = gpd.GeoDataFrame(data, geometry="geometry")
+
+    # file_path = "../gpkg_files/modiin.gpkg"
+
+    # gdf = gpd.read_file(file_path)
+    # # print(gdf.head(10))
+    # # leading_metrics_per_group = unsupervised_leading_metrics(gdf, classification_column, n_components=1)
+    # # top_metrics_per_group = supervised_leading_metrics(gdf, classification_column)
+    # # gdf = gdf.drop(columns=["street_index"])
+    # gdf = gdf.dropna()
+    # cluster_number = 1
+    # cluster_1_rows = gdf[gdf["cluster"] == cluster_number]
+    # print(gdf['cluster'].unique())
+    # # print(cluster_1_rows.head(10))
+    # cluster_1_rows = cluster_1_rows.drop(columns=["cluster"])
+    # results = analyze_cluster(cluster_1_rows)
+
+    # plot_cluster_analysis(gdf, results, cluster_number)
+    # plot_cluster_summary(gdf, results, cluster_number)
+
+    # example 2
+    # file_path = "../gpkg_files/katzrin.gpkg"
+    # gdf = gpd.read_file(file_path)
+    # gdf = gdf.dropna()
+    # columns = gdf.columns
+    # results = analyze_cluster(gdf)
+    # plot_gdf_analysis(gdf, results, 1)
+    # plot_cluster_summary(gdf, results, 1)
