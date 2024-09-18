@@ -24,7 +24,7 @@ def compute_percentiles(merged, queen_3):
             'geometry',
             'street_index',
             'junction_index',
-            'mm_len',
+            'tID',
         ]
     ):
         print(column)
@@ -34,7 +34,7 @@ def compute_percentiles(merged, queen_3):
 
     percentiles_joined = pd.concat(percentiles, axis=1)
     metrics_df = pd.concat([merged.drop(
-        columns=['geometry', 'street_index', 'junction_index', 'mm_len',]), 
+        columns=['geometry', 'street_index', 'junction_index', 'tID',]), 
         percentiles_joined], axis=1)
     return metrics_df
 

@@ -1,25 +1,17 @@
-from rtree import index   #TODO: check KDtree
+from rtree import index
 import geopandas as gpd
-import fiona
-import os
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import momepy
-import libpysal
-import osmnx
-import pandas
-from bokeh.io import output_notebook
-from bokeh.plotting import show
 from clustergram import Clustergram
-from shapely.geometry import Point
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from libpysal import graph
 from packaging.version import Version
 import numpy as np
+import matplotlib.pyplot as plt
+from collections import Counter
+from kneed import KneeLocator
+from sklearn.cluster import KMeans
 
 
 
@@ -171,3 +163,95 @@ def buffered_limit(gdf, buffer: float | str = 100, min_buffer: float = 0, max_bu
         if GPD_GE_10
         else gdf.buffer(buffer, **kwargs).unary_union
     )
+
+
+
+
+
+def _elbow(gdf, K: range):
+    """
+    :param gdf: the dataFrame to cluster
+    :param K: iterable of number of clusters to try i.g range(1, 10)
+    :param plot: whether to plot the distortion and inertia or not
+    :return:
+    """
+    inertias = []
+    distortions = []
+    for k in K:
+        # Building and fitting the model
+        kmeanModel = KMeans(n_clusters=k)
+        kmeanModel.fit(gdf.fillna(0))
+        inertia = kmeanModel.inertia_
+        inertias.append(inertia)
+        distortions.append(inertia / len(gdf))
+
+    return distortions, inertias
+
+
+def _clusters_scores(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1,
+                     max_clusters=15,
+                     n_init=13, random_state=42, plot=False) -> pd.DataFrame:
+    """
+    :param gdf: geoDataFrame that contains the data
+    :param model: model to use for clustering ['kmeans', 'gmm', 'minibatchkmeans', 'hierarchical']
+    :param max_clusters: maximum number of clusters to consider
+    :param min_clusters: minimum number of clusters to consider
+    :param standardize: whether to standardize the data or not
+    :return: most suitable number of clusters
+    """
+    scores = {'K': [i for i in range(min_clusters, max_clusters + 1) if i > 1]}
+    if standardize:
+        gdf = (gdf - gdf.mean()) / gdf.std()
+    K = range(min_clusters, max_clusters + 1)
+
+    cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
+    cgram.fit(gdf.fillna(0))
+
+    scores['silhouette'] = cgram.silhouette_score()
+    scores['davies_bouldin'] = cgram.davies_bouldin_score()
+    scores['calinski_harabasz'] = cgram.calinski_harabasz_score()
+    return pd.DataFrame(scores)
+
+
+def select_best_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1,
+                                max_clusters=15,
+                                n_init=13, random_state=42, plot=False) -> int:
+    """
+    :param gdf: geoDataFrame that contains the data
+    :param model: model to use for clustering ['kmeans', 'gmm', 'minibatchkmeans', 'hierarchical']
+    :param max_clusters: maximum number of clusters to consider
+    :param min_clusters: minimum number of clusters to consider
+    :param standardize: whether to standardize the data or not
+    :return: most suitable number of clusters
+    """
+    best_scores = {}
+    scores = _clusters_scores(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
+    K = range(min_clusters, max_clusters + 1)
+    distortions, inertia = _elbow(gdf, K)
+
+    best_scores['inertia'] = KneeLocator(K, inertia, curve='convex', direction='decreasing').elbow
+
+    best_scores['distortion'] = KneeLocator(K, distortions, curve='convex', direction='decreasing').elbow
+
+    if plot:
+        plt.plot(scores['K'], scores.distortion, 'bx-')
+        plt.vlines(best_scores['distortion'], plt.ylim()[0], plt.ylim()[1], linestyles='dashed')
+        plt.xlabel('Number of clusters')
+        plt.ylabel('distortion')
+        plt.title(f'Elbow at k = {best_scores['distortion']}')
+        plt.show()
+
+        plt.plot(scores['K'], scores.inertia, 'bx-')
+        plt.vlines(best_scores['inertia'], plt.ylim()[0], plt.ylim()[1], linestyles='dashed')
+        plt.xlabel('Number of clusters')
+        plt.ylabel('distortion')
+        plt.title(f'Elbow at k = {best_scores['inertia']}')
+        plt.show()
+
+    best_scores['silhouette'] = scores.loc[scores['K'] == scores['silhouette'].idxmax()]['K'].values[0]
+    best_scores['davies_bouldin'] = scores.loc[scores['K'] == scores['davies_bouldin'].idxmin()]['K'].values[0]
+    best_scores['calinski_harabasz'] = scores.loc[scores['K'] == scores['calinski_harabasz'].idxmax()]['K'].values[0]
+
+    return Counter(list(best_scores.values())).most_common(1)[0][0]
+
+
