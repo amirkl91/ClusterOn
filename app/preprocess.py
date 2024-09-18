@@ -149,12 +149,23 @@ def get_tessellation(buildings, streets=None, tess_mode='enclosed', clim='adapti
         tessellations = tessellations[tessellations['tID'] >= 0]
         tessellations = tessellations.drop_duplicates('tID', keep='first')
 
+        collapsed, _ = momepy.verify_tessellation(tessellations, buildings)
+        if len(collapsed) > 0:
+            buildings.drop(collapsed, inplace=True)
+            tessellations, enclosures = get_tessellation(buildings, streets, tess_mode, clim)
+            
+
         return tessellations, enclosures
     elif tess_mode=='morphometric':
         t0 = time()
         tessellations = momepy.morphological_tessellation(buildings, clip=limit)
         tessellations['tID'] = tessellations.index
         # print(f'Computed tessellations: {time()-t0} s')
+        collapsed, _ = momepy.verify_tessellation(tessellations, buildings)
+        if len(collapsed) > 0:
+            buildings.drop(collapsed, inplace=True)
+            tessellations = get_tessellation(buildings, streets, tess_mode, clim)
+            
         return tessellations
     
     else:
