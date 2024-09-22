@@ -50,15 +50,35 @@ for global analysis:
 
 def analyze_gdf(gdf, classification_column):
     cluster_results = {}
-    print(gsf["lof_score"])
+
+    # print(gdf["lof_score"].head(10))
     # Loop over each cluster in the classification column
     for cluster in gdf[classification_column].unique():
         cluster_rows = gdf[gdf[classification_column] == cluster]
         cluster_rows = cluster_rows.drop(
             columns=[classification_column]
         )  # Drop classification column
+
+        numeric_data = cluster_rows.select_dtypes(
+            include=[float, int]
+        )  # Select only numeric columns
+        geometry_data = cluster_rows["geometry"]  # Keep the geometry column separate
+
+        # Standardize the numeric columns
+        scaler = StandardScaler()
+        numeric_data_standardized = pd.DataFrame(
+            scaler.fit_transform(numeric_data), columns=numeric_data.columns
+        )
+
+        # Re-attach the geometry column to the standardized numeric data
+        cluster_rows = gpd.GeoDataFrame(
+            numeric_data_standardized, geometry=geometry_data
+        )
         cluster_results[cluster] = analyze_cluster(cluster_rows)
-        # plot_cluster_summary(cluster_rows, cluster_results[cluster], cluster)
+        print("cluster", cluster)
+        if cluster == 7:
+            plot_cluster_summary(cluster_rows, cluster_results[cluster], cluster)
+            plot_cluster_analysis(cluster_rows, cluster_results[cluster], cluster)
         plot_flexibility_score(cluster_rows, cluster_results[cluster], cluster)
     # Global Analysis (Optional): Apply SVD over the whole dataset
     numeric_columns = gdf.select_dtypes(include=[float, int]).columns
@@ -162,9 +182,15 @@ def analyze_cluster(gdf):
 
     # 6. Local Outlier Factor (LOF)
     lof = LocalOutlierFactor(n_neighbors=5)
-    gdf["lof_score"] = lof.fit_predict(gdf[numeric_columns])
-    lof_outliers = gdf[gdf["lof_score"] == -1]
-    result["lof_outliers"] = lof_outliers  # Local outliers
+    lof_scores = lof.fit_predict(gdf[numeric_columns])
+    lof_results = pd.DataFrame(
+        {
+            "lof_score": lof_scores,
+            "is_outlier": lof_scores == -1,  # Flag outliers (-1 indicates an outlier)
+        }
+    )
+    lof_outliers = gdf[lof_results["is_outlier"] == True]  # Local outliers
+    result["lof_outliers"]= lof_outliers
 
     # 7. Variance Inflation Factor (VIF)
     vif_data = pd.DataFrame()
@@ -492,7 +518,7 @@ def cluster_similarity_analysis(gdf, classification_column):
 if __name__ == "__main__":
     file_path = "../gpkg_files/modiin.gpkg"
     gdf = gpd.read_file(file_path)
-    print("gdf column number:", len(gdf.columns))
+    # gdf.drop(columns="geometry").to_csv("output.csv", index=False)
     threshold = len(gdf) * 0.5
 
     # Step 1: Remove columns with more than 50% NaNs
@@ -505,7 +531,9 @@ if __name__ == "__main__":
     print("Columns removed due to more than 50% NaNs:")
     print(set(gdf.columns) - set(gdf.columns))
     # Optionally, print the cleaned GeoDataFrame if needed
-    gdf.drop(columns=["street_index", "junction_index"], inplace=True)
+    gdf.drop(columns=["street_index", "junction_index", "tID"], inplace=True)
+    # cluster = gdf["cluster"]
+    # gdf = gdf.drop(columns=["cluster"])
     analyze_gdf(gdf, "cluster")
 
     # data = {

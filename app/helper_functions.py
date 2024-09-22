@@ -165,9 +165,6 @@ def buffered_limit(gdf, buffer: float | str = 100, min_buffer: float = 0, max_bu
     )
 
 
-
-
-
 def _elbow(gdf, K: range):
     """
     :param gdf: the dataFrame to cluster
@@ -175,17 +172,15 @@ def _elbow(gdf, K: range):
     :param plot: whether to plot the distortion and inertia or not
     :return:
     """
-    inertias = []
     distortions = []
     for k in K:
         # Building and fitting the model
         kmeanModel = KMeans(n_clusters=k)
         kmeanModel.fit(gdf.fillna(0))
         inertia = kmeanModel.inertia_
-        inertias.append(inertia)
         distortions.append(inertia / len(gdf))
 
-    return distortions, inertias
+    return distortions
 
 
 def _clusters_scores(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1,
@@ -227,31 +222,23 @@ def select_best_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardi
     best_scores = {}
     scores = _clusters_scores(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
     K = range(min_clusters, max_clusters + 1)
-    distortions, inertia = _elbow(gdf, K)
-
-    best_scores['inertia'] = KneeLocator(K, inertia, curve='convex', direction='decreasing').elbow
+    distortions = _elbow(gdf, K)
 
     best_scores['distortion'] = KneeLocator(K, distortions, curve='convex', direction='decreasing').elbow
 
     if plot:
-        plt.plot(scores['K'], scores.distortion, 'bx-')
+        plt.plot(K, distortions, 'bx-')
         plt.vlines(best_scores['distortion'], plt.ylim()[0], plt.ylim()[1], linestyles='dashed')
         plt.xlabel('Number of clusters')
         plt.ylabel('distortion')
         plt.title(f'Elbow at k = {best_scores['distortion']}')
         plt.show()
 
-        plt.plot(scores['K'], scores.inertia, 'bx-')
-        plt.vlines(best_scores['inertia'], plt.ylim()[0], plt.ylim()[1], linestyles='dashed')
-        plt.xlabel('Number of clusters')
-        plt.ylabel('distortion')
-        plt.title(f'Elbow at k = {best_scores['inertia']}')
-        plt.show()
-
     best_scores['silhouette'] = scores.loc[scores['K'] == scores['silhouette'].idxmax()]['K'].values[0]
     best_scores['davies_bouldin'] = scores.loc[scores['K'] == scores['davies_bouldin'].idxmin()]['K'].values[0]
     best_scores['calinski_harabasz'] = scores.loc[scores['K'] == scores['calinski_harabasz'].idxmax()]['K'].values[0]
-
+    print(scores)
+    print(best_scores)
     return Counter(list(best_scores.values())).most_common(1)[0][0]
 
 
