@@ -4,8 +4,9 @@ import momepy
 from libpysal import graph
 
 def generate_building_metrics(buildings: gpd.geodataframe, height_column_name=None):
+    buildings['Area'] = buildings.geometry.area
+
     if height_column_name:
-        buildings['Area'] = buildings.geometry.area
         buildings['floor_area'] = momepy.floor_area(buildings['Area'], buildings['building_height'])
         buildings['volume'] = momepy.volume(buildings['Area'], buildings['building_height'])
         buildings['form_factor'] = momepy.form_factor(buildings, buildings['building_height'])
