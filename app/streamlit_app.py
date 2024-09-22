@@ -4,7 +4,7 @@ from data_input import load_roads_from_osm, load_gdb_layer
 import metrics
 import merge_dfs as md
 from generate_clusters import get_cgram, add_cluster_col, plot_clusters_st
-from data_output import dataframe_to_gdb
+from data_output import dataframe_to_gdb, save_and_download
 import matplotlib.pyplot as plt
 import pandas as pd
 import momepy
@@ -14,22 +14,9 @@ import fiona
 
 # Streamlit App Title
 st.title("Morphological Analysis Tool")
+st.markdown("# Main page 🌐")
 
-### make clusters
-st.subheader("Loading Data Files...")
-standardized = pd.read_csv("/Users/annarubtsov/Desktop/app_files/standardized_metrics.csv")
-merged = pd.read_csv("/Users/annarubtsov/Desktop/app_files/merged_metrics.csv")
-buildings = pd.read_csv("/Users/annarubtsov/Desktop/app_files/buildings_data.csv")
-
-# Step 2: Make Clusters
-st.subheader("Processing Clusters...")
-cgram = get_cgram(standardized, 4)
-urban_types = add_cluster_col(merged, buildings, cgram, 3)
-
-plot_clusters_st(urban_types)
-#dataframe_to_gdb(urban_types, "/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/מרקמים/commondata/myproject16.gdb", "urban_types")
-
-
+st.sidebar.markdown("# Main page 🌐")
 # 1. Upload GDB Layer for Buildings Data
 add_upload_header = st.sidebar.header("Step 1: Upload GDB File for Buildings Data")
 # Add an upload window to the sidebar:
@@ -103,26 +90,12 @@ if st.button("Run Preprocessing and Clustering"):
         standardized = md.standardize_df(metrics_with_percentiles)
         st.success("Preprocessing completed!")
 
-        ### make clusters
-        # cgram = get_cgram(standardized, 14)
-        # urban_types = add_cluster_col(merged, buildings, cgram, 13)
-        # plot_clusters(urban_types)
-        # dataframe_to_gdb(urban_types, "/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/מרקמים/commondata/myproject16.gdb", "urban_types")
+        # User inputs for saving paths
+        csv_path = st.text_input("Enter the path to save the CSV file:", value="/Users/annarubtsov/Desktop/app_files")
+        gdb_path = st.text_input("Enter the path to save the GDB file:", value="/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/קונטור בניינים/commondata/jps_reka.gdb")
 
-        # # Example plot code
-        # st.write("Plotting ...")
-        # # Sample data
-        # # Assuming `buildings` is a GeoDataFrame with a column "shared_walls"
-        # buildings["shared_walls"] = momepy.SharedWalls(buildings).series
-        # # Create a figure and axis
-        # fig, ax = plt.subplots(figsize=(15, 15))
-        # # Plot buildings with shared walls ratio
-        # buildings.plot(column="shared_walls", scheme="natural_breaks", legend=True, ax=ax)
-        # # Add a title
-        # plt.title(f"Shared Walls Length for Jerus", fontsize=16)
-        # # Remove axis
-        # ax.set_axis_off()
-        # # Show plot in Streamlit
-        # st.pyplot(fig)
+        if st.button("Save Files"):
+            # Save to CSV
+            save_and_download(buildings, csv_path, gdb_path, "builidngs")
     else:
         st.error("Please upload a GDB file and load the data before running.")

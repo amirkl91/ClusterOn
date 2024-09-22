@@ -2,6 +2,7 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 import pyogrio
+import streamlit as st
 
 def dataframe_to_shp(dataframe, shp_path):
     """
@@ -57,6 +58,29 @@ def dataframe_to_gdb(dataframe, gdb_path, layer_name):
     # Export to FileGDB
     pyogrio.write_dataframe(gdf, gdb_path, layer=layer_name, driver='OpenFileGDB')
     print(f"Data exported to {gdb_path} with layer name '{layer_name}'")
+
+# Define a function to save the dataframes and create download links
+def save_and_download(df, csv_path, gdb_path, file_name):
+    # Save as CSV
+    df.to_csv(csv_path, index=False)
+   
+    # Save as GDB
+    df.to_file(gdb_path, driver='OpenFileGDB')
+
+    # Create download links
+    st.download_button(
+        label=f"Download {file_name} CSV",
+        data=open(csv_path, 'rb').read(),
+        file_name='standardized_metrics.csv',
+        mime='text/csv'
+    )
+    
+    st.download_button(
+        label=f"Download {file_name} GDB",
+        data=open(gdb_path, 'rb').read(),
+        file_name='my_data.gdb',
+        mime='application/gdb'
+    )
 
 # Example usage
 if __name__ == "__main__":
