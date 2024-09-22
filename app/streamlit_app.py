@@ -1,6 +1,6 @@
 import streamlit as st
 import preprocess as pp
-from data_input import load_buildings_from_osm, load_roads_from_osm, load_gdb_layer, handle_gdb_upload, handle_zip_upload
+from data_input import load_buildings_from_osm, load_roads_from_osm, load_gdb_layer
 import metrics
 import merge_dfs as md
 from generate_clusters import get_cgram, add_cluster_col, plot_clusters
