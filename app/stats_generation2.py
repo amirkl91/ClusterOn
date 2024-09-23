@@ -49,7 +49,7 @@ for global analysis:
 """
 
 
-def analyze_gdf(gdf, classification_column):
+def analyze_gdf(gdf, classification_column, csv_folder_path):
     cluster_results = {}
 
     # Loop over each cluster in the classification column
@@ -61,23 +61,23 @@ def analyze_gdf(gdf, classification_column):
         )  # Drop classification column
 
         # Select numeric columns and geometry column
-        numeric_data = cluster_rows.select_dtypes(include=[float, int])
-        geometry_data = cluster_rows["geometry"]  # Keep geometry column
-
+        # numeric_data = cluster_rows.select_dtypes(include=[float, int])
+        # geometry_data = cluster_rows["geometry"]  # Keep geometry column
         # Standardize numeric columns
-        scaler = StandardScaler()
-        numeric_data_standardized = pd.DataFrame(
-            scaler.fit_transform(numeric_data), columns=numeric_data.columns
-        )
-
-        # Reattach the geometry column to the standardized numeric data
-        cluster_rows = gpd.GeoDataFrame(
-            numeric_data_standardized, geometry=geometry_data
-        )
+        # scaler = StandardScaler()
+        # numeric_data = pd.DataFrame(
+        #     scaler.fit_transform(numeric_data), columns=numeric_data.columns
+        # )
+        # # Reattach the geometry column to the standardized numeric data
+        # cluster_rows = gpd.GeoDataFrame(numeric_data, geometry=geometry_data)
 
         # Analyze each cluster and store the results
         cluster_results[cluster] = analyze_cluster(cluster_rows)
-
+        pf.save_cluster_analysis_to_csv(
+            cluster,
+            cluster_results[cluster],
+            f"{csv_folder_path}/cluster{cluster}_analysis.csv",
+        )
     # Perform global analysis
     global_summary = perform_global_analysis(
         gdf, classification_column, cluster_results
@@ -88,7 +88,12 @@ def analyze_gdf(gdf, classification_column):
         gdf, cluster_results, classification_column, global_summary
     )
 
-    return global_summary
+    # Add another layers to the gdf
+    gdf = classify_outliers(gdf, cluster_results)
+    print(gdf["outlier_flag"])
+    outlier_counts = gdf.groupby(classification_column)["outlier_flag"].sum()
+    print(outlier_counts)
+    return gdf
 
 
 def perform_global_analysis(gdf, classification_column, cluster_results):
@@ -145,17 +150,18 @@ def plot_all_cluster_results(
     pf.plot_outliers(gdf, cluster_results, classification_column)
 
     # Plot top 5 and bottom 5 flexibility scores for each cluster
-    pf.plot_top_and_bottom_flexibility_scores(cluster_results)
+    pf.plot_flexibility_scores_table(cluster_results)
 
-    # Plot overall VIF for all clusters
-    pf.plot_overall_vif(cluster_results)
+    # # Plot overall VIF for all clusters
+    # pf.plot_overall_vif(cluster_results)
 
     # Plot overall metrics that influenced outliers the most
     pf.plot_overall_metrics_influence(cluster_results)
 
+    pf.save_flexibility_scores_to_csv(cluster_results)
     # Plot cluster similarities
-    silhouette_avg, silhouette_values, target = global_summary["similarity_results"]
-    pf.plot_cluster_similarity(silhouette_values, target, silhouette_avg)
+    # silhouette_avg, silhouette_values, target = global_summary["similarity_results"]
+    # pf.plot_cluster_similarity(silhouette_values, target, silhouette_avg)
 
 
 def analyze_cluster(gdf):
@@ -168,6 +174,17 @@ def analyze_cluster(gdf):
     stats = gdf[numeric_columns].describe().T
     stats["variance"] = gdf[numeric_columns].var()  # Variance
     result["basic_stats"] = stats
+
+    # normalize
+    numeric_data = gdf.select_dtypes(include=[float, int])
+    geometry_data = gdf["geometry"]  # Keep geometry column
+    # Standardize numeric columns
+    scaler = StandardScaler()
+    numeric_data = pd.DataFrame(
+        scaler.fit_transform(numeric_data), columns=numeric_data.columns
+    )
+    # Reattach the geometry column to the standardized numeric data
+    gdf = gpd.GeoDataFrame(numeric_data, geometry=geometry_data)
 
     # 2. Outlier detection using the IQR method (outliers are 1.5 * IQR beyond Q1 and Q3)
     Q1 = gdf[numeric_columns].quantile(0.25)
@@ -194,6 +211,7 @@ def analyze_cluster(gdf):
     result["correlation_matrix"] = correlation_matrix
 
     # 6. Local Outlier Factor (LOF)
+
     lof = LocalOutlierFactor(n_neighbors=5)
     lof_scores = lof.fit_predict(gdf[numeric_columns])
     lof_results = pd.DataFrame(
@@ -464,7 +482,7 @@ def supervised_leading_metrics(gdf, classification_column):
 
 def cluster_similarity_analysis(gdf, classification_column):
     """
-    Calculate and print silhouette and Davies-Bouldin scores for cluster similarity, 
+    Calculate and print silhouette and Davies-Bouldin scores for cluster similarity,
     and return silhouette values for plotting.
     """
     features = gdf.drop(columns=[classification_column, "geometry"])
@@ -487,9 +505,42 @@ def cluster_similarity_analysis(gdf, classification_column):
     return silhouette_avg, silhouette_values, target
 
 
+def classify_outliers(gdf, results):
+    """
+    Function to classify outliers in the global gdf based on the analysis results.
+
+    Args:
+        gdf: The main GeoDataFrame that contains all the data.
+        classification_column: The column in gdf that represents the cluster classification.
+        results: The results from the analyze_cluster function for each cluster.
+
+    Returns:
+        gdf: The main gdf with an added 'outlier_flag' column (1 for outliers, 0 for non-outliers).
+    """
+    # Initialize the outlier flag as 0 for all rows (assuming they are non-outliers)
+    gdf["outlier_flag"] = 0
+
+    # Loop through the results and identify the outliers for each cluster
+    for cluster, cluster_result in results.items():
+        # Extract the outliers from the result for this cluster
+        outliers_in_cluster = cluster_result["outliers"]
+
+        # Mark the outliers in the global gdf using the index from the cluster result
+        gdf.loc[outliers_in_cluster.index, "outlier_flag"] = 1
+
+    return gdf  # Return the updated gdf with the outlier_flag
+
+
+def analyze(gdf, csv_folder_path):
+    gdf = analyze_gdf(gdf, "cluster", csv_folder_path)
+    return gdf
+
+
 if __name__ == "__main__":
     file_path = "../gpkg_files/modiin.gpkg"
     gdf = gpd.read_file(file_path)
+    print("cluster" in gdf.columns)
+
     # gdf.drop(columns="geometry").to_csv("output.csv", index=False)
     threshold = len(gdf) * 0.5
 
@@ -498,5 +549,9 @@ if __name__ == "__main__":
 
     # Step 2: Replace remaining NaNs with 0 in the remaining columns
     gdf.fillna(0, inplace=True)
-    gdf.drop(columns=["street_index", "junction_index", "tID"], inplace=True)
-    analyze_gdf(gdf, "cluster")
+    gdf.drop(
+        columns=["street_index", "junction_index", "tID", "tess_covered_area"],
+        inplace=True,
+    )
+
+    analyze_gdf(gdf, "cluster", "../output_CSVs")
