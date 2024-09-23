@@ -59,28 +59,16 @@ def dataframe_to_gdb(dataframe, gdb_path, layer_name):
     pyogrio.write_dataframe(gdf, gdb_path, layer=layer_name, driver='OpenFileGDB')
     print(f"Data exported to {gdb_path} with layer name '{layer_name}'")
 
-# Define a function to save the dataframes and create download links
-def save_and_download(df, csv_path, gdb_path, file_name):
-    # Save as CSV
-    df.to_csv(csv_path, index=False)
-   
-    # Save as GDB
-    df.to_file(gdb_path, driver='OpenFileGDB')
-
+# A function saves the dataframes and creates download link
+def save_csv(csv):
     # Create download links
     st.download_button(
-        label=f"Download {file_name} CSV",
-        data=open(csv_path, 'rb').read(),
-        file_name='standardized_metrics.csv',
+        label=f"Download CSV",
+        data=csv,
+        file_name='buildings.csv',
         mime='text/csv'
     )
-    
-    st.download_button(
-        label=f"Download {file_name} GDB",
-        data=open(gdb_path, 'rb').read(),
-        file_name='my_data.gdb',
-        mime='application/gdb'
-    )
+
 
 # Example usage
 if __name__ == "__main__":
