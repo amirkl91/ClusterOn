@@ -66,14 +66,12 @@ def analyze_gdf(gdf, classification_column):
 
         # Standardize the numeric columns
         scaler = StandardScaler()
-        numeric_data_standardized = pd.DataFrame(
+        numeric_data = pd.DataFrame(
             scaler.fit_transform(numeric_data), columns=numeric_data.columns
         )
 
         # Re-attach the geometry column to the standardized numeric data
-        cluster_rows = gpd.GeoDataFrame(
-            numeric_data_standardized, geometry=geometry_data
-        )
+        cluster_rows = gpd.GeoDataFrame(numeric_data, geometry=geometry_data)
         cluster_results[cluster] = analyze_cluster(cluster_rows)
         print("cluster", cluster)
         if cluster == 7:
@@ -190,7 +188,7 @@ def analyze_cluster(gdf):
         }
     )
     lof_outliers = gdf[lof_results["is_outlier"] == True]  # Local outliers
-    result["lof_outliers"]= lof_outliers
+    result["lof_outliers"] = lof_outliers
 
     # 7. Variance Inflation Factor (VIF)
     vif_data = pd.DataFrame()

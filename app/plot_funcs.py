@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import pandas as pd
+import matplotlib.colors as mcolors
 
 
 def plot_outliers(gdf, results, classification_column):
@@ -32,10 +33,14 @@ def plot_outliers(gdf, results, classification_column):
     plt.show()
 
 
-def plot_top_and_bottom_flexibility_scores(results):
+def plot_flexibility_scores_table(results):
     """
-    Function to plot the top 5 and bottom 5 flexibility scores for each cluster.
+    Function to plot a table showing the top 5 and bottom 5 flexibility scores for each cluster,
+    with separate columns for the metric names and values, and a title above the table.
     """
+    # Prepare data for the table
+    table_data = []
+    # Iterate over each cluster's results
     for cluster, result in results.items():
         flexibility_score = result["flexibility_score"]
 
@@ -43,38 +48,151 @@ def plot_top_and_bottom_flexibility_scores(results):
         top_5_metrics = flexibility_score.nlargest(5)
         bottom_5_metrics = flexibility_score.nsmallest(5)
 
-        # Combine the top 5 and bottom 5 metrics for plotting
-        selected_metrics = pd.concat([top_5_metrics, bottom_5_metrics])
-
-        # Plot the selected metrics for this cluster
-        plt.figure(figsize=(14, 8))
-        bars = plt.bar(
-            selected_metrics.index, selected_metrics, color="skyblue", width=0.8
+        # Add top 5 and bottom 5 metrics as separate columns for metric names and values
+        top_5_metrics_names = "\n".join(top_5_metrics.index)
+        top_5_metrics_values = "\n".join(
+            [f"{score:.2f}" for score in top_5_metrics.values]
+        )
+        bottom_5_metrics_names = "\n".join(bottom_5_metrics.index)
+        bottom_5_metrics_values = "\n".join(
+            [f"{score:.2f}" for score in bottom_5_metrics.values]
         )
 
-        # Highlight the top 5 flexible (green) and bottom 5 strict (red) metrics
-        for idx in top_5_metrics.index:
-            bars[selected_metrics.index.get_loc(idx)].set_color(
-                "green"
-            )  # Top 5 flexible
-        for idx in bottom_5_metrics.index:
-            bars[selected_metrics.index.get_loc(idx)].set_color(
-                "red"
-            )  # Bottom 5 strict
-
-        # Rotate x-tick labels for better readability
-        plt.xticks(rotation=45, ha="right")
-
-        # Add title and labels
-        plt.title(
-            f"Top 5 and Bottom 5 Flexibility Scores for Cluster {cluster}", fontsize=16
+        # Add the data to the table
+        table_data.append(
+            [
+                f"Cluster {cluster}",
+                top_5_metrics_names,
+                top_5_metrics_values,
+                bottom_5_metrics_names,
+                bottom_5_metrics_values,
+            ]
         )
-        plt.xlabel("Metrics")
-        plt.ylabel("Flexibility Score (Avg of SD and Entropy)")
 
-        # Show the plot
-        plt.tight_layout()
-        plt.show()
+    # Create a table figure with a larger height and width to fit the content
+    fig, ax = plt.subplots(
+        figsize=(13, len(results) * 1.5)
+    )  # Increase figure size for better visibility
+    ax.axis("tight")
+    ax.axis("off")
+
+    # Define table headers and content
+    headers = [
+        "Cluster",
+        "Top 5 Flexible Metrics",
+        "Top 5 Flexibility Scores",
+        "Bottom 5 Strict Metrics",
+        "Bottom 5 Strict Scores",
+    ]
+    table = ax.table(
+        cellText=table_data, colLabels=headers, cellLoc="center", loc="center"
+    )
+
+    # Adjust the font size and layout for better visibility
+    table.auto_set_font_size(True)
+
+    # Adjust column width to reduce the size of the 'Cluster' column
+    table.auto_set_column_width([0, 1, 2, 3, 4])
+    table.column_widths = [
+        0.07,
+        0.3,
+        0.1,
+        0.3,
+        0.1,
+    ]  # Adjust column widths manually if needed
+
+    # Set header row colors
+    for key, cell in table.get_celld().items():
+        row, col = key
+        if row == 0:  # Header row
+            cell.set_fontsize(12)
+            cell.set_text_props(weight="bold", color="white")
+            cell.set_facecolor("darkblue")
+            cell.set_edgecolor("white")
+        elif row % 2 == 0:  # Alternate row colors for visibility
+            cell.set_facecolor(mcolors.CSS4_COLORS["lightgrey"])
+
+    # Set font sizes for rows and adjust height for better readability of multi-line content
+    for row in table._cells:
+        table._cells[row].set_height(0.13)  # Adjust this value if necessary
+
+    # Adjust the layout to ensure the table fills the figure and moves the title higher
+    plt.subplots_adjust(top=0.95)  # Move title higher
+
+    # Add title separately above the table
+    plt.suptitle(
+        "Top 5 and Bottom 5 Flexibility Scores for Each Cluster", fontsize=18, y=0.95
+    )
+
+    plt.tight_layout()
+    plt.show()
+
+
+def save_flexibility_scores_to_csv(results, output_filename="flexibility_scores.csv"):
+    """
+    Function to save the top 5 and bottom 5 flexibility scores for each cluster into a CSV file,
+    sorted by flexibility score in decreasing order.
+    Args:
+        results: Dictionary containing the flexibility scores for each cluster.
+        output_filename: Name of the CSV file to save the results.
+    """
+    # Prepare a list to store flexibility scores
+    data_to_save = []
+
+    # Iterate over each cluster's results
+    for cluster, result in results.items():
+        flexibility_score = result["flexibility_score"]
+
+        # Sort flexibility scores in decreasing order
+        sorted_scores = flexibility_score.sort_values(ascending=False)
+
+        # Add each score and corresponding metric to the list
+        for metric, score in sorted_scores.items():
+            data_to_save.append([cluster, metric, score])
+
+    # Convert the list to a DataFrame
+    flexibility_df = pd.DataFrame(
+        data_to_save, columns=["Cluster", "Metric", "Flexibility Score"]
+    )
+
+    # Save the DataFrame to a CSV file
+    flexibility_df.to_csv(output_filename, index=False)
+
+
+def save_cluster_analysis_to_csv(cluster_label, result, path):
+    """
+    Function to save the cluster's basic statistics, flexibility scores, and other results into a CSV.
+    Args:
+        cluster_label: The name or label of the cluster.
+        result: The analysis result containing stats, VIF, flexibility scores, etc.
+        output_filename: Name of the CSV file to save the results.
+    """
+    # Extract relevant data from the result dictionary
+    stats = result["basic_stats"]
+    flexibility_score = result["flexibility_score"]
+    vif_data = result["vif"]
+
+    # Sort flexibility score in decreasing order
+    sorted_flexibility = flexibility_score.sort_values(ascending=False)
+
+    # Merge basic statistics with sorted flexibility score
+    combined_df = stats.copy()
+    combined_df["Flexibility Score"] = flexibility_score
+    combined_df = combined_df.sort_values(by="Flexibility Score", ascending=False)
+
+    # Add the VIF scores to the same DataFrame
+    combined_df = combined_df.merge(
+        vif_data.set_index("feature"), left_index=True, right_index=True, how="left"
+    )
+
+    # Add a column for the cluster label
+    combined_df["Cluster"] = cluster_label
+
+    # Round all numeric values to 2 decimal places
+    combined_df = combined_df.round(2)
+
+    # Save the combined data to a CSV
+    combined_df.to_csv(path, index=True)
 
 
 def plot_overall_leading_metrics(results):
@@ -149,7 +267,7 @@ def plot_overall_vif(results):
     # Plot the overall VIF
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.bar(vif_mean.index, vif_mean, color="purple")
-    ax.set_title("Overall Variance Inflation Factor (VIF) Across All Clusters")
+    ax.set_title("Overall (VIF) - how a metric is correlated to all others")
     ax.set_xticklabels(vif_mean.index, rotation=45, ha="right")
     plt.xlabel("Features")
     plt.ylabel("Mean VIF Across Clusters")

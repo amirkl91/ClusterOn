@@ -7,7 +7,7 @@ import geopandas as gpd
 
 verbose = True
 t0 = time()
-place = "katzrin"
+place = "modiin"
 local_crs = "EPSG:2039"
 network_type = "drive"
 
@@ -38,7 +38,8 @@ junctions, streets = metrics.generate_junctions_metrics(streets)
 merged = md.merge_all_metrics(tessellations, buildings, streets, junctions)
 metrics_with_percentiles = md.compute_percentiles(merged, queen_3)
 standardized = md.standardize_df(metrics_with_percentiles)
-
+print("geometry" in merged.columns)
+print("number of columns:", len(merged.columns))
 # david
 # Check if standardized DataFrame has a geometry column
 geometry_column = merged["geometry"]
@@ -51,4 +52,6 @@ standardized_with_geometry["geometry"] = geometry_column
 gdf = gpd.GeoDataFrame(standardized_with_geometry, geometry="geometry", crs=local_crs)
 
 # Now you can save it to a file
-gdf.to_file("../gpkg_files/katzrin.gpkg", layer="nodes", driver="GPKG")
+merged = md.cluster_gdf(merged)
+
+merged.to_file("../gpkg_files/modiin.gpkg", layer="nodes", driver="GPKG")
