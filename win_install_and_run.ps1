@@ -1,7 +1,7 @@
 # Define the package name and requirements file path
-$PACKAGE_NAME = "app"
-$VENV_DIR = "venv"
-$REQUIREMENTS_FILE = "requirements.txt"  # Make sure this is set globally
+$PACKAGE_NAME = Join-Path $PSScriptRoot "/app/streamlit_app.py"  # Python package name
+$VENV_DIR = Join-Path $PSScriptRoot "venv"  # Virtual environment path relative to the script
+$REQUIREMENTS_FILE = Join-Path $PSScriptRoot "requirements.txt"  # Requirements file path relative to the script
 
 # Function to check if Python is installed
 function Check-Python {
@@ -41,7 +41,7 @@ function Setup-Venv {
         Write-Host "Activating virtual environment..."
         & $venvActivate
     } else {
-        Write-Host "Virtual environment activation script not found."
+        Write-Host "Virtual environment activation script not found. please delete venv folder and try again."
         exit 1
     }
 }
@@ -61,7 +61,7 @@ function Install-Requirements {
 # Function to run the Python package as a module
 function Run-Script {
     Write-Host "Running Python package: $PACKAGE_NAME"
-    python -m $PACKAGE_NAME
+    streamlit run $PACKAGE_NAME
 }
 
 # Main logic
