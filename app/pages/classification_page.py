@@ -21,10 +21,15 @@ st.sidebar.subheader("Upload Data Files")
 merged = st.session_state.get('merged')
 standardized = st.session_state.get('standardized')
 percentiles = st.session_state.get('metrics_with_percentiles')
-buildings = st.session_state.get('buildings')
+buildings = st.session_state.get('buildings_gdf')
 
 if st.button("Run classification"):
+    # Display the session state
+    st.write("### Current Session State")
+    st.write(st.session_state)
+    st.write(buildings)
     st.write(merged)
+
     st.subheader("Processing Clusters...")
     cgram = get_cgram(standardized, 4)
     urban_types = add_cluster_col(merged, buildings, cgram, 3)
