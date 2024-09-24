@@ -145,6 +145,47 @@ elif str_data_source == "Use streets OSM data":
 
 ##################################################
 
+# User inputs for saving paths
+
+gdf = st.session_state.get("buildings_gdf")
+layer_name = st.text_input("Enter layer name to save the gdb file:", value="all_metrics")
+
+if gdf is not None:
+    st.write(gdf.head())
+    try:
+        # Save to CSV
+        csv = convert_df(gdf)
+        save_csv(csv)
+
+        if st.button("Download GDB as ZIP"):
+            # Create a temporary directory
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                # Save the GDB file
+                dataframe_to_gdb(gdf, os.path.join(tmpdirname, layer_name + ".gdb"), layer_name)
+
+                # Create a ZIP file
+                zip_filename = os.path.join(tmpdirname, layer_name + ".zip")
+                with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                    zipf.write(os.path.join(tmpdirname, layer_name + ".gdb"), arcname=layer_name + ".gdb")
+
+                # Provide download link
+                with open(zip_filename, "rb") as f:
+                    st.download_button(
+                        label="Download ZIP",
+                        data=f,
+                        file_name=layer_name + ".zip",
+                        mime="application/zip"
+                    )
+
+            st.success("Files successfully saved.")
+    except Exception as e:
+        st.error(f"An error occurred while saving: {e}")
+else:
+    st.warning("Please run the preprocess first.")
+
+
+
+
 
 ######################### pre-process: #########################
 
