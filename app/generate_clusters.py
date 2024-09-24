@@ -64,7 +64,7 @@ def plot_clusters_st(buildings):
     colors = plt.get_cmap('tab20').colors
 
     # Plot buildings colored by cluster
-    buildings.plot(column='cluster', cmap='Set1', legend=False, ax=ax, edgecolor='k')  # Add edgecolor for better visibility
+    buildings.plot(column='cluster', cmap='Set1', legend=False, ax=ax)  # Add edgecolor for better visibility
 
     # Add title and customize plot
     ax.set_title('Urban Types by Cluster', fontsize=16)
