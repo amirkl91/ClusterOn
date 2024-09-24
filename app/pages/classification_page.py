@@ -13,16 +13,46 @@ import fiona
 
 
 # Streamlit App Title
-st.title("Morphological Analysis Tool")
-st.markdown("# Page 2 🗺️")
-st.sidebar.markdown("# Page 2 🗺️")
+st.title("Morphological Analysis Tool 🌍📌📏")
+st.sidebar.markdown("# Classification of city textures 🗺️")
 # Sidebar for uploading files
 st.sidebar.subheader("Upload Data Files")
 
-# File upload for standardized metrics
-standardized_file = st.sidebar.file_uploader("Upload Standardized Metrics CSV", type='csv')
-if standardized_file:
-    standardized = pd.read_csv(standardized_file)
+merged = st.session_state.get('merged')
+standardized = st.session_state.get('standardized')
+percentiles = st.session_state.get('metrics_with_percentiles')
+buildings = st.session_state.get('buildings')
+
+if st.button("Run classification"):
+    st.write(merged)
+    st.subheader("Processing Clusters...")
+    cgram = get_cgram(standardized, 4)
+    urban_types = add_cluster_col(merged, buildings, cgram, 3)
+    plot_clusters_st(urban_types)
+
+### make clusters
+        # cgram = get_cgram(standardized, 14)
+        # urban_types = add_cluster_col(merged, buildings, cgram, 13)
+        # plot_clusters(urban_types)
+        # dataframe_to_gdb(urban_types, "/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/מרקמים/commondata/myproject16.gdb", "urban_types")
+
+        # # Example plot code
+        # st.write("Plotting ...")
+        # # Sample data
+        # # Assuming `buildings` is a GeoDataFrame with a column "shared_walls"
+        # buildings["shared_walls"] = momepy.SharedWalls(buildings).series
+        # # Create a figure and axis
+        # fig, ax = plt.subplots(figsize=(15, 15))
+        # # Plot buildings with shared walls ratio
+        # buildings.plot(column="shared_walls", scheme="natural_breaks", legend=True, ax=ax)
+        # # Add a title
+        # plt.title(f"Shared Walls Length for Jerus", fontsize=16)
+        # # Remove axis
+        # ax.set_axis_off()
+        # # Show plot in Streamlit
+        # st.pyplot(fig)
+    # else:
+    #     st.error("Please upload a GDB file and load the data before running.")
 
 # File upload for merged metrics
 merged_file = st.sidebar.file_uploader("Upload Merged Metrics CSV", type='csv')
@@ -35,14 +65,18 @@ if buildings_file:
     buildings = pd.read_csv(buildings_file)
 
 # Proceed with clustering after files are uploaded
-if 'standardized' in locals() and 'merged' in locals() and 'buildings' in locals():
-    st.success("Files loaded successfully!")
-    # Step 2: Make Clusters
-    st.subheader("Processing Clusters...")
-    cgram = get_cgram(standardized, 4)
-    urban_types = add_cluster_col(merged, buildings, cgram, 3)
+# if 'standardized' in locals() and 'merged' in locals() and 'buildings' in locals():
+#     st.success("Files loaded successfully!")
+#     # Step 2: Make Clusters
+#     st.subheader("Processing Clusters...")
+#     cgram = get_cgram(standardized, 4)
+#     urban_types = add_cluster_col(merged, buildings, cgram, 3)
 
-    plot_clusters_st(urban_types)
+#     plot_clusters_st(urban_types)
+
+
+
+
 
 #dataframe_to_gdb(urban_types, "/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/מרקמים/commondata/myproject16.gdb", "urban_types")
 
