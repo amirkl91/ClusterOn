@@ -24,7 +24,7 @@ def return_osm_params(session_string):
     return st.session_state.get(session_string)[0], st.session_state.get(session_string)[1], st.session_state.get(session_string)[2]
 
 @st.cache_data
-def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf):
+def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, height_column_name):
     if _buildings_gdf is not None:
         # If buildings data is from GDB
         if isinstance(_buildings_gdf, pd.DataFrame):  
@@ -42,7 +42,7 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf):
         streets = load_roads_from_osm(place, network_type=network_type)
     
     streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
-    buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs)
+    buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs, height_name=height_column_name)
     # Generate tessellation
     tessellations = pp.get_tessellation(buildings=buildings, streets=streets, 
                                         tess_mode='morphometric', clim='adaptive')
@@ -63,6 +63,11 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf):
     st.session_state['merged'] = merged
     st.session_state['metrics_with_percentiles'] = metrics_with_percentiles
     st.session_state['standardized'] = standardized
+
+    st.write(buildings)
+    st.write(merged)
+    st.write(metrics_with_percentiles)
+    st.write(standardized)
 
     return merged, metrics_with_percentiles, standardized
 
@@ -107,7 +112,7 @@ def load_osm_data(data_source_key, data_type):
     return place, local_crs, network_type
 
 # List of metrics
-metrics = [
+metrics_list = [
     'squareness',
     'perimeter',
     'shape_index',
@@ -165,7 +170,14 @@ metrics = [
 # Create a dictionary to store user selections
 user_selections = {}
 
+
 st.set_page_config(layout="wide")
+
+
+# Display the session state
+# st.write("### Current Session State")
+# st.write(st.session_state)
+
 st.title("Morphological Analysis Tool 🌍📌📏")
 # Description paragraph
 st.markdown("""
@@ -176,19 +188,20 @@ st.markdown("""
     3. You will be able to download the processed data.
     """)
 
-st.markdown("Select Metrics for Analysis")
-# Create columns to display checkboxes in rows
-num_columns = 5  # Adjust the number of columns as needed
-columns = st.columns(num_columns)
+# Use an expander for the metrics selection
+with st.expander("Select Metrics for Analysis ✔️", expanded=False):
+    # Create columns to display checkboxes in rows
+    num_columns = 5  # Adjust the number of columns as needed
+    columns = st.columns(num_columns)
 
-# Iterate over metrics and display them in columns
-for i, metric in enumerate(metrics):
-    col_index = i % num_columns  # Determine the column index
-    with columns[col_index]:
-        is_selected = st.checkbox(f"{metric.capitalize()}", value=True)
-        
-        # Save the user's choice (True/False) in the dictionary
-        user_selections[metric] = is_selected
+    # Iterate over metrics and display them in columns
+    for i, metric in enumerate(metrics_list):
+        col_index = i % num_columns  # Determine the column index
+        with columns[col_index]:
+            is_selected = st.checkbox(f"{metric.capitalize()}", value=True)
+            
+            # Save the user's choice (True/False) in the dictionary
+            user_selections[metric] = is_selected
 
 st.sidebar.markdown("# Preprocess 🧹 & Metrics generation 📐")
 
@@ -200,6 +213,8 @@ bld_data_source = st.sidebar.radio("Select buildings data source:", ("Upload bui
 
 if bld_data_source == "Upload buildings GDB file":
     load_gdb_data("buildings", "buildings")
+    height_column_name = st.sidebar.text_input("Enter the name of the **height** column:", value=None)
+    st.session_state['height_column_name'] = height_column_name
 elif bld_data_source == "Use buildings OSM data":
     place, local_crs, network_type = load_osm_data("buildings", "buildings")
     st.session_state['buildings_data'] = (place, local_crs, network_type)
@@ -216,25 +231,21 @@ elif str_data_source == "Use streets OSM data":
 
 ##################################################
 
-# Display the session state
-st.write("### Current Session State")
-st.write(st.session_state)
-
-
 
 ######################### pre-process: #########################
 
 # 3. Button to Run the Processing Functionality
 if st.button("Run preprocessing and generate metrics"):
-    # TODO: use the user_selections dictionary
+    # TODO: use the user_selections dictionary before preprocessing
     buildings_gdf = st.session_state.get('buildings_gdf')
     streets_gdf = st.session_state.get('streets_gdf')
+    height_column_name = st.session_state.get('height_column_name')
     if streets_gdf is None:
         session_string = 'streets_data'
     elif buildings_gdf is None:
         session_string = 'buildings_data'
     place, local_crs, network_type = return_osm_params(session_string)
-    merged, metrics_with_percentiles, standardized = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf)       
+    merged, metrics_with_percentiles, standardized = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name)       
     st.success("Preprocessing completed!")
 
 ##################################################
