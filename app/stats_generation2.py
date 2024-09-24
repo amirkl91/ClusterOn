@@ -1,7 +1,7 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-from shapely.geometry import Point
+# from matplotlib.lines import Line2D
+# from shapely.geometry import Point
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
@@ -11,24 +11,24 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import LocalOutlierFactor
 import seaborn as sns
 import pandas as pd
-from esda.moran import Moran
-import libpysal
-from esda.getisord import G
-from sklearn.cluster import KMeans
+# from esda.moran import Moran
+# import libpysal
+# from esda.getisord import G
+# from sklearn.cluster import KMeans
 import geopandas as gpd
-from scipy.stats import skew, kurtosis, zscore
+# from scipy.stats import skew, kurtosis, zscore
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import TSNE
-import umap.umap_ as umap
-from scipy.spatial.distance import pdist, squareform
-from scipy.cluster.hierarchy import dendrogram, linkage
+# from sklearn.manifold import TSNE
+# import umap.umap_ as umap
+# from scipy.spatial.distance import pdist, squareform
+# from scipy.cluster.hierarchy import dendrogram, linkage
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
-from scipy.stats import entropy
-import shap
+# from scipy.stats import entropy
+# import shap
 from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
-import os
+# import os
 import plot_funcs as pf
 
 local_crs = "EPSG:2039"
@@ -147,7 +147,7 @@ def plot_all_cluster_results(
     Function to plot all relevant information about clusters: outliers, flexibility, VIF, and metrics influence.
     """
     # Plot outliers for each cluster
-    pf.plot_outliers(gdf, cluster_results, classification_column)
+    # pf.plot_outliers(gdf, cluster_results, classification_column)
 
     # Plot top 5 and bottom 5 flexibility scores for each cluster
     pf.plot_flexibility_scores_table(cluster_results)
