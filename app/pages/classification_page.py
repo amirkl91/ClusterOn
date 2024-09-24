@@ -18,17 +18,22 @@ st.sidebar.markdown("# Classification of city textures 🗺️")
 # Sidebar for uploading files
 st.sidebar.subheader("Upload Data Files")
 
+ # Display the session state
+st.write("### Current Session State")
+st.write(st.session_state)
+
 merged = st.session_state.get('merged')
 standardized = st.session_state.get('standardized')
 percentiles = st.session_state.get('metrics_with_percentiles')
-buildings = st.session_state.get('buildings_gdf')
+buildings = st.session_state.get('buildings')
 
 if st.button("Run classification"):
-    # Display the session state
-    st.write("### Current Session State")
-    st.write(st.session_state)
+   
     st.write(buildings)
     st.write(merged)
+    st.write(standardized)
+    st.write(percentiles)
+
 
     st.subheader("Processing Clusters...")
     cgram = get_cgram(standardized, 4)
