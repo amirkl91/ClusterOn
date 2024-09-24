@@ -64,12 +64,7 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, h
     st.session_state['metrics_with_percentiles'] = metrics_with_percentiles
     st.session_state['standardized'] = standardized
 
-    st.write(buildings)
-    st.write(merged)
-    st.write(metrics_with_percentiles)
-    st.write(standardized)
-
-    return merged, metrics_with_percentiles, standardized
+    return merged, metrics_with_percentiles, standardized, buildings
 
 def load_gdb_data(data_source_key, data_type):
     st.sidebar.header(f"Upload {data_type} Data")
@@ -245,7 +240,7 @@ if st.button("Run preprocessing and generate metrics"):
     elif buildings_gdf is None:
         session_string = 'buildings_data'
     place, local_crs, network_type = return_osm_params(session_string)
-    merged, metrics_with_percentiles, standardized = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name)       
+    merged, metrics_with_percentiles, standardized, buildings = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name)       
     st.success("Preprocessing completed!")
 
 ##################################################
@@ -253,19 +248,53 @@ if st.button("Run preprocessing and generate metrics"):
 
 ######################### save: #########################
 
-# Check if 'merged' exists in session state before using it
-if 'merged' in st.session_state:
-    merged = st.session_state['merged']
-else:
-    merged = None
-    st.warning("Please upload files first, then run the preprocess.")
-
 # User inputs for saving paths
 gdb_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/קונטור בניינים/commondata/jps_reka.gdb")
 layer_name = st.text_input("Enter layer name to save the gdb file:", value="all_metrics")
 
-if merged is not None:
-    st.write(merged.head())
+# Check if data exists in session state before proceeding
+if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_state and 'standardized' in st.session_state and 'buildings' in st.session_state:
+    merged = st.session_state['merged']
+    metrics_with_percentiles = st.session_state['metrics_with_percentiles']
+    standardized = st.session_state['standardized']
+    buildings = st.session_state['buildings']
+    
+    try:
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            # Define file paths for each CSV file
+            merged_csv_path = os.path.join(tmpdirname, "merged.csv")
+            metrics_csv_path = os.path.join(tmpdirname, "metrics_with_percentiles.csv")
+            standardized_csv_path = os.path.join(tmpdirname, "standardized.csv")
+            buildings_csv_path = os.path.join(tmpdirname, "buildings.csv")
+            
+            # Convert DataFrames to CSV and save them
+            merged.to_csv(merged_csv_path, index=False)
+            metrics_with_percentiles.to_csv(metrics_csv_path, index=False)
+            standardized.to_csv(standardized_csv_path, index=False)
+            buildings.to_csv(buildings_csv_path, index=False)
+            
+            # Create a ZIP file containing all the CSVs
+            zip_filename = os.path.join(tmpdirname, "data_files.zip")
+            with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                zipf.write(merged_csv_path, arcname="merged.csv")
+                zipf.write(metrics_csv_path, arcname="metrics_with_percentiles.csv")
+                zipf.write(standardized_csv_path, arcname="standardized.csv")
+                zipf.write(buildings_csv_path, arcname="buildings.csv")
+            
+            # Provide download link for the ZIP file
+            with open(zip_filename, "rb") as f:
+                st.download_button(
+                    label="Download All as ZIP for classification step",
+                    data=f,
+                    file_name="data_files.zip",
+                    mime="application/zip"
+                )
+                
+        st.success("ZIP file successfully created and ready for download.")
+    except Exception as e:
+        st.error(f"An error occurred while saving the ZIP file: {e}")
+    
     try:
         # Save to CSV
         csv = convert_df(merged)
@@ -275,8 +304,25 @@ if merged is not None:
             st.success(f"Files successfully saved to {gdb_path}")
     except Exception as e:
         st.error(f"An error occurred while saving: {e}")
+
 else:
-    st.warning("Please run the preprocess first.")
+    merged = None
+    st.warning("Please upload files first, then run the preprocess.")
+
+# if merged is not None:
+#     st.write(merged.head())
+#     try:
+#         # Save to CSV
+#         csv = convert_df(merged)
+#         save_csv(csv)
+#         if st.button("Download gdb"):
+#             dataframe_to_gdb(merged, gdb_path, layer_name)
+#             st.success(f"Files successfully saved to {gdb_path}")
+#     except Exception as e:
+#         st.error(f"An error occurred while saving: {e}")
+# else:
+#     st.warning("Please run the preprocess first.")
+
 
 ##################################################
 
