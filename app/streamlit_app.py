@@ -14,8 +14,6 @@ import zipfile
 from PIL import Image
 import tempfile
 
-
-
 @st.cache_data
 def convert_df(_df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -108,6 +106,65 @@ def load_osm_data(data_source_key, data_type):
 
     return place, local_crs, network_type
 
+# List of metrics
+metrics = [
+    'squareness',
+    'perimeter',
+    'shape_index',
+    'circular_compactness',
+    'square_compactness',
+    'weighted_axis_compactness',
+    'courtyard_area',
+    'courtyard_index',
+    'fractal_dimension',
+    'facade_ratio',
+    'orientation',
+    'longest_axis_length',
+    'equivalent_rectangular_index',
+    'elongation',
+    'rectangularity',
+    'shared_walls_length',
+    'perimeter_wall',
+    'alignment',
+    'adjacency',
+    'mean_interbuilding_distance',
+    'neighbour_distance',
+    'courtyards_num',
+    'street_alignment',
+    'tess_area',
+    'tess_circ_compactness',
+    'tess_convexity',
+    'tess_neighbors',
+    'tess_covered_area',
+    'tess_build_area_raio',  # Corrected typo from 'tess_build_area_raio'
+    'tess_orientation',
+    'tess_building_orientation',
+    'tess_alignment',
+    'tess_equivalent_rect_index',
+    'mm_len',
+    'str_orientation',
+    'str_longest_axis',
+    'str_linearity',
+    'str_length',
+    'width',
+    'openness',
+    'width_dev',
+    'degree',
+    'closeness',
+    'cyclomatic',
+    'edge_node_ratio',
+    'gamma',
+    'mean_nd',
+    'meanlen',
+    'meshedness',
+    'node_density',
+    'node_density_weighted',
+    'straightness'
+]
+
+# Create a dictionary to store user selections
+user_selections = {}
+
 st.set_page_config(layout="wide")
 st.title("Morphological Analysis Tool 🌍📌📏")
 # Description paragraph
@@ -118,6 +175,20 @@ st.markdown("""
     2. Run the preprocess button.
     3. You will be able to download the processed data.
     """)
+
+st.markdown("Select Metrics for Analysis")
+# Create columns to display checkboxes in rows
+num_columns = 5  # Adjust the number of columns as needed
+columns = st.columns(num_columns)
+
+# Iterate over metrics and display them in columns
+for i, metric in enumerate(metrics):
+    col_index = i % num_columns  # Determine the column index
+    with columns[col_index]:
+        is_selected = st.checkbox(f"{metric.capitalize()}", value=True)
+        
+        # Save the user's choice (True/False) in the dictionary
+        user_selections[metric] = is_selected
 
 st.sidebar.markdown("# Preprocess 🧹 & Metrics generation 📐")
 
@@ -145,11 +216,17 @@ elif str_data_source == "Use streets OSM data":
 
 ##################################################
 
+# Display the session state
+st.write("### Current Session State")
+st.write(st.session_state)
+
+
 
 ######################### pre-process: #########################
 
 # 3. Button to Run the Processing Functionality
 if st.button("Run preprocessing and generate metrics"):
+    # TODO: use the user_selections dictionary
     buildings_gdf = st.session_state.get('buildings_gdf')
     streets_gdf = st.session_state.get('streets_gdf')
     if streets_gdf is None:
