@@ -73,11 +73,11 @@ def analyze_gdf(gdf, classification_column, csv_folder_path):
 
         # Analyze each cluster and store the results
         cluster_results[cluster] = analyze_cluster(cluster_rows)
-        pf.save_cluster_analysis_to_csv(
-            cluster,
-            cluster_results[cluster],
-            f"{csv_folder_path}/cluster{cluster}_analysis.csv",
-        )
+        # pf.save_cluster_analysis_to_csv(
+        #     cluster,
+        #     cluster_results[cluster],
+        #     f"{csv_folder_path}/cluster{cluster}_analysis.csv",
+        # )
     # Perform global analysis
     global_summary = perform_global_analysis(
         gdf, classification_column, cluster_results
