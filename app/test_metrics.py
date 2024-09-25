@@ -11,6 +11,9 @@ network_type = 'drive'
 
 streets = load_roads_from_osm(place, network_type=network_type)
 streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
+junctions, streets = metrics.generate_junctions_metrics(streets)
+if verbose: print('Got junction metrics')
+
 if verbose: print('Got streets')
 
 buildings = load_buildings_from_osm(place)
@@ -34,8 +37,6 @@ if verbose: print('Got street metrics')
 queen_3 = metrics.generate_graph_building_metrics(buildings, streets, queen_1)
 if verbose: print('Got graph building metrics')
 
-junctions, streets = metrics.generate_junctions_metrics(streets)
-if verbose: print('Got junction metrics')
 
 print(f'Total runtime: {(time()-t0)/60:.2f} mins')
 # t0 = time()
