@@ -505,7 +505,7 @@ def varify_cleaned_gdf(gdf):
     gdf = gdf.dropna(axis=1, thresh=threshold)
     gdf.fillna(0, inplace=True)
     gdf.drop(
-        columns=["street_index", "junction_index", "tID", "tess_covered_area"],
+        columns=["street_index", "junction_index"],
         inplace=True,
     )
     return gdf

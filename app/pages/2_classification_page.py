@@ -4,7 +4,7 @@ from data_input import load_roads_from_osm, load_gdb_layer
 import metrics
 import merge_dfs as md
 from generate_clusters import add_cluster_col, plot_clusters_st, best_davies_bouldin_score, plot_num_of_clusters
-from data_output import dataframe_to_gdb, save_csv
+from data_output import dataframe_to_gdb, save_csv, save_gdf_to_gpkg
 import matplotlib.pyplot as plt
 import pandas as pd
 import momepy
@@ -117,6 +117,7 @@ if st.button("Run classification"):
 
 # User inputs for saving paths
 gdb_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/מרקמים/commondata/myproject16.gdb")
+gpkg_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop")
 layer_name = st.text_input("Enter layer name to save the gdb file:", value="clusters")
 
 # Check if data exists in session state before proceeding
@@ -131,6 +132,10 @@ if 'urban_types' in st.session_state:
         if st.button("Download gdb"):
             dataframe_to_gdb(urban_types, gdb_path, layer_name)
             st.success(f"Files successfully saved to {gdb_path}")
+        # save to gpkg
+        st.write('before o')
+        save_gdf_to_gpkg(urban_types, gpkg_path)
+        st.write('after o')
     except Exception as e:
         st.error(f"An error occurred while saving: {e}")
 else:

@@ -3,6 +3,8 @@ import pandas as pd
 from shapely.geometry import Point
 import pyogrio
 import streamlit as st
+from io import BytesIO
+
 
 def dataframe_to_shp(dataframe, shp_path):
     """
@@ -68,6 +70,25 @@ def save_csv(csv, file_name):
         file_name=file_name,
         mime='text/csv'
     )
+
+# Function to save GeoDataFrame as GPKG and return a download link
+def save_gdf_to_gpkg(gdf, filename):
+    # Create a BytesIO object to store the file in memory
+    buffer = BytesIO()
+    gdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs='EPSG:2039')  # Adjust based on your data
+    # Save the GeoDataFrame to the buffer as a GPKG file
+    gdf.to_file(buffer, driver="GPKG", layer="layer_name")
+    # Set the buffer position to the start to read from the beginning
+    buffer.seek(0)
+    
+    # Streamlit's download button to download the GPKG file
+    st.download_button(
+        label="Download GPKG",
+        data=buffer,
+        file_name=filename,
+        mime="application/geopackage+sqlite3"
+    )
+
 
 
 # Example usage
