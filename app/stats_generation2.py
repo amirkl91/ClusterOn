@@ -1,5 +1,6 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
+
 # from matplotlib.lines import Line2D
 # from shapely.geometry import Point
 from sklearn.decomposition import PCA
@@ -11,23 +12,37 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import LocalOutlierFactor
 import seaborn as sns
 import pandas as pd
+import geopandas as gpd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from scipy.spatial.distance import pdist, squareform
+from scipy.cluster.hierarchy import dendrogram, linkage
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import numpy as np
+from scipy.stats import entropy
+from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
+
 # from esda.moran import Moran
 # import libpysal
 # from esda.getisord import G
 # from sklearn.cluster import KMeans
 import geopandas as gpd
+
 # from scipy.stats import skew, kurtosis, zscore
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
 # from sklearn.manifold import TSNE
 # import umap.umap_ as umap
 # from scipy.spatial.distance import pdist, squareform
 # from scipy.cluster.hierarchy import dendrogram, linkage
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
+
 # from scipy.stats import entropy
 # import shap
 from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
+
 # import os
 import plot_funcs as pf
 
@@ -73,6 +88,11 @@ def analyze_gdf(gdf, classification_column, csv_folder_path):
 
         # Analyze each cluster and store the results
         cluster_results[cluster] = analyze_cluster(cluster_rows)
+        # pf.save_cluster_analysis_to_csv(
+        #     cluster,
+        #     cluster_results[cluster],
+        #     f"{csv_folder_path}/cluster{cluster}_analysis.csv",
+        # )
         pf.save_cluster_analysis_to_csv(
             cluster,
             cluster_results[cluster],
@@ -90,10 +110,9 @@ def analyze_gdf(gdf, classification_column, csv_folder_path):
 
     # Add another layers to the gdf
     gdf = classify_outliers(gdf, cluster_results)
-    print(gdf["outlier_flag"])
     outlier_counts = gdf.groupby(classification_column)["outlier_flag"].sum()
     print(outlier_counts)
-    return gdf
+    return gdf, cluster_results
 
 
 def perform_global_analysis(gdf, classification_column, cluster_results):
@@ -147,8 +166,7 @@ def plot_all_cluster_results(
     Function to plot all relevant information about clusters: outliers, flexibility, VIF, and metrics influence.
     """
     # Plot outliers for each cluster
-    # pf.plot_outliers(gdf, cluster_results, classification_column)
-
+    pf.plot_outliers(gdf, cluster_results, classification_column)
     # Plot top 5 and bottom 5 flexibility scores for each cluster
     pf.plot_flexibility_scores_table(cluster_results)
 
@@ -532,8 +550,8 @@ def classify_outliers(gdf, results):
 
 
 def analyze(gdf, csv_folder_path):
-    gdf = analyze_gdf(gdf, "cluster", csv_folder_path)
-    return gdf
+    gdf, results = analyze_gdf(gdf, "cluster", csv_folder_path)
+    return gdf, results
 
 
 if __name__ == "__main__":

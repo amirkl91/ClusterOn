@@ -24,7 +24,7 @@ def return_osm_params(session_string):
     return st.session_state.get(session_string)[0], st.session_state.get(session_string)[1], st.session_state.get(session_string)[2]
 
 @st.cache_data
-def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, height_column_name):
+def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, height_column_name, user_selections):
     if _buildings_gdf is not None:
         # If buildings data is from GDB
         if isinstance(_buildings_gdf, pd.DataFrame):  
@@ -244,7 +244,7 @@ if st.button("Run preprocessing and generate metrics"):
     elif buildings_gdf is None:
         session_string = 'buildings_data'
     place, local_crs, network_type = return_osm_params(session_string)
-    merged, metrics_with_percentiles, standardized, buildings = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name)       
+    merged, metrics_with_percentiles, standardized, buildings = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)       
     st.success("Preprocessing completed!")
 
 ##################################################
@@ -300,9 +300,10 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
         st.error(f"An error occurred while saving the ZIP file: {e}")
     
     try:
-        # Save to CSV
+        # save to CSV
         csv = convert_df(merged)
-        save_csv(csv)
+        save_csv(csv, file_name='buildings.csv')
+        # save to gdb
         if st.button("Download gdb"):
             dataframe_to_gdb(merged, gdb_path, layer_name)
             st.success(f"Files successfully saved to {gdb_path}")
