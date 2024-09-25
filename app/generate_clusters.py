@@ -130,20 +130,12 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
 
     return fig,axes
 
-
-
-
-def get_cgram(standardized, max_range):
-    cgram = Clustergram(range(1, max_range), n_init=10, random_state=42)
+def add_cluster_col(merged, buildings, standardized, clusters_num):
+    cgram = Clustergram(range(clusters_num, clusters_num+1), n_init=10, random_state=42)
     cgram.fit(standardized.fillna(0))
-    #show(cgram.bokeh())
-    #cgram.labels.head()
-    return cgram
-
-def add_cluster_col(merged, buildings, cgram, clusters_num):
     merged["cluster"] = cgram.labels[clusters_num].values
     buildings["cluster"] = merged["cluster"]
-    return buildings
+    return buildings #,merged #TODO: save merged and return it?
 
 def plot_clusters(buildings):
     # Define the colors for each cluster
