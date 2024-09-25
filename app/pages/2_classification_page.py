@@ -3,7 +3,7 @@ import preprocess as pp
 from data_input import load_roads_from_osm, load_gdb_layer
 import metrics
 import merge_dfs as md
-from generate_clusters import get_cgram, add_cluster_col, plot_clusters_st, best_davies_bouldin_score, plot_num_of_clusters
+from generate_clusters import add_cluster_col, plot_clusters_st, best_davies_bouldin_score, plot_num_of_clusters
 from data_output import dataframe_to_gdb, save_csv
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -91,7 +91,7 @@ if st.button("Recommend number of clusters"):
         # Show plot in Streamlit
         st.pyplot(cluster_fig)
 
-num_clusters = st.selectbox("Select number of clusters:", options=range(2, 21), index=5)
+clusters_num = st.selectbox("Select number of clusters:", options=range(2, 21), index=5)
 # Run classification button
 if st.button("Run classification"):
     # Ensure all necessary data is available
@@ -102,9 +102,7 @@ if st.button("Run classification"):
         standardized = st.session_state['standardized']
         buildings = st.session_state['buildings']
 
-        st.subheader("Processing Clusters...")
-        cgram = get_cgram(standardized, num_clusters)
-        urban_types = add_cluster_col(merged, buildings, cgram, num_clusters-1)
+        urban_types = add_cluster_col(merged, buildings, standardized, clusters_num)
         st.session_state['urban_types'] = urban_types
         plot_clusters_st(urban_types) #TODO: need to fix plotting
         #TODO: need to check the results for other city than Jerusalem
