@@ -128,8 +128,6 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
         ax.set_ylabel('Score')
         ax.grid(True)
 
-    plt.tight_layout()
-    plt.show()
     return fig,axes
 
 
