@@ -300,9 +300,10 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
         st.error(f"An error occurred while saving the ZIP file: {e}")
     
     try:
-        # Save to CSV
+        # save to CSV
         csv = convert_df(merged)
         save_csv(csv)
+        # save to gdb
         if st.button("Download gdb"):
             dataframe_to_gdb(merged, gdb_path, layer_name)
             st.success(f"Files successfully saved to {gdb_path}")
