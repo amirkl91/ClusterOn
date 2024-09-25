@@ -94,12 +94,16 @@ def load_gdb_data(data_source_key, data_type):
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
-def load_osm_data(data_source_key, data_type):
+def load_osm_data(data_source_key, data_type, is_streets):
     st.sidebar.header(f"Enter {data_type} Data from OSM")
     place = st.sidebar.text_input(f"Enter a city name for OSM {data_type} data", value="Jerusalem", key=f"{data_source_key}_place")
     local_crs = st.sidebar.text_input(f"Enter Local CRS (e.g., EPSG:2039)", value="EPSG:2039", key=f"{data_source_key}_crs")
-    network_type = st.sidebar.selectbox(f"Select Network Type for {data_type}", ["drive", "walk", "bike"], index=0, key=f"{data_source_key}_network")
-
+    # Add a hyperlink
+    st.sidebar.markdown("[Don't know your CRS?](https://epsg.io/#google_vignette)", unsafe_allow_html=True)
+    if is_streets:
+        network_type = st.sidebar.selectbox(f"Select Network Type for {data_type}", ["drive", "walk", "bike"], index=0, key=f"{data_source_key}_network")
+    else:
+        network_type = None
     if st.sidebar.button(f"Load OSM {data_type} Data", key=f"{data_source_key}_osm_load"):
         st.sidebar.write(f"OSM data fetched")
         # Here you would load the OSM data
@@ -211,7 +215,7 @@ if bld_data_source == "Upload buildings GDB file":
     height_column_name = st.sidebar.text_input("Enter the name of the **height** column:", value=None)
     st.session_state['height_column_name'] = height_column_name
 elif bld_data_source == "Use buildings OSM data":
-    place, local_crs, network_type = load_osm_data("buildings", "buildings")
+    place, local_crs, network_type = load_osm_data("buildings", "buildings", False)
     st.session_state['buildings_data'] = (place, local_crs, network_type)
 
 # Select streets data source
@@ -221,7 +225,7 @@ str_data_source = st.sidebar.radio("Select streets data source:", ("Upload stree
 if str_data_source == "Upload streets GDB file":
     load_gdb_data("streets", "streets")
 elif str_data_source == "Use streets OSM data":
-    place, local_crs, network_type = load_osm_data("streets", "streets")
+    place, local_crs, network_type = load_osm_data("streets", "streets", True)
     st.session_state['streets_data'] = (place, local_crs, network_type)
 
 ##################################################

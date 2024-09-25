@@ -19,7 +19,7 @@ st.sidebar.markdown("# Classification of city textures 🗺️")
 st.sidebar.subheader("Upload Data Files")
 
 # Option to load existing data
-load_existing = st.sidebar.radio("Choose how to load data:", ("From session state", "Upload ZIP file"))
+load_existing = st.sidebar.radio("Choose how to load data:", ("Continue preprocess part", "Upload ZIP file"))
 
 if load_existing == "Upload ZIP file":
     # Upload the ZIP file
@@ -57,7 +57,7 @@ if load_existing == "Upload ZIP file":
         except Exception as e:
             st.sidebar.error(f"An error occurred while processing the ZIP file: {e}")
 
-elif load_existing == "From session state":
+elif load_existing == "Continue preprocess part":
     # Load data from session state if it exists
     merged = st.session_state.get('merged')
     standardized = st.session_state.get('standardized')
@@ -65,12 +65,12 @@ elif load_existing == "From session state":
     buildings = st.session_state.get('buildings')
 
     if merged is not None and standardized is not None and percentiles is not None and buildings is not None:
-        st.sidebar.success("Loaded data from session state.")
+        st.sidebar.success("Loaded data from preprocess part.")
         st.sidebar.write(merged.head())  # Preview the merged DataFrame
     else:
-        st.sidebar.warning("No data found in session state. Please upload a ZIP file.")
+        st.sidebar.warning("You have to run preprocess part first. Please upload a ZIP file.")
 
-num_clusters = st.slider("Select number of clusters:", min_value=2, max_value=15, value=7)
+num_clusters = st.selectbox("Select number of clusters:", options=range(2, 21), index=5)
 # Run classification button
 if st.button("Run classification"):
     # Ensure all necessary data is available
@@ -84,6 +84,7 @@ if st.button("Run classification"):
         st.subheader("Processing Clusters...")
         cgram = get_cgram(standardized, num_clusters)
         urban_types = add_cluster_col(merged, buildings, cgram, num_clusters-1)
-        plot_clusters_st(urban_types)
+        plot_clusters_st(urban_types) #TODO: need to fix plotting
+        #TODO: need to check the reslts for other city than Jerusalem
     else:
         st.warning("Please ensure all data is loaded before running classification.")
