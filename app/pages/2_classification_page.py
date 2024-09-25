@@ -3,7 +3,7 @@ import preprocess as pp
 from data_input import load_roads_from_osm, load_gdb_layer
 import metrics
 import merge_dfs as md
-from generate_clusters import get_cgram, add_cluster_col, plot_clusters_st, best_davies_bouldin_score, plot_num_of_clusters
+from generate_clusters import add_cluster_col, plot_clusters_st, best_davies_bouldin_score, plot_num_of_clusters
 from data_output import dataframe_to_gdb, save_csv
 import matplotlib.pyplot as plt
 import pandas as pd
