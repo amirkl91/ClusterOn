@@ -66,48 +66,21 @@ for global analysis:
 
 def analyze_gdf(gdf, classification_column, csv_folder_path):
     cluster_results = {}
-
     # Loop over each cluster in the classification column
     for cluster in gdf[classification_column].unique():
-        # Filter the rows corresponding to the current cluster
         cluster_rows = gdf[gdf[classification_column] == cluster]
-        cluster_rows = cluster_rows.drop(
-            columns=[classification_column]
-        )  # Drop classification column
-
-        # Select numeric columns and geometry column
-        # numeric_data = cluster_rows.select_dtypes(include=[float, int])
-        # geometry_data = cluster_rows["geometry"]  # Keep geometry column
-        # Standardize numeric columns
-        # scaler = StandardScaler()
-        # numeric_data = pd.DataFrame(
-        #     scaler.fit_transform(numeric_data), columns=numeric_data.columns
-        # )
-        # # Reattach the geometry column to the standardized numeric data
-        # cluster_rows = gpd.GeoDataFrame(numeric_data, geometry=geometry_data)
-
-        # Analyze each cluster and store the results
+        cluster_rows = cluster_rows.drop(columns=[classification_column])
         cluster_results[cluster] = analyze_cluster(cluster_rows)
-        # pf.save_cluster_analysis_to_csv(
-        #     cluster,
-        #     cluster_results[cluster],
-        #     f"{csv_folder_path}/cluster{cluster}_analysis.csv",
-        # )
-        pf.save_cluster_analysis_to_csv(
-            cluster,
-            cluster_results[cluster],
-            f"{csv_folder_path}/cluster{cluster}_analysis.csv",
-        )
+        # df = output_cluster_stats(cluster, cluster_results)
+        # df.to_csv(f"{csv_folder_path}/cluster{cluster}_analysis.csv", index=True)
     # Perform global analysis
     global_summary = perform_global_analysis(
         gdf, classification_column, cluster_results
     )
-
     # Plot relevant information
     plot_all_cluster_results(
         gdf, cluster_results, classification_column, global_summary
     )
-
     # Add another layers to the gdf
     gdf = classify_outliers(gdf, cluster_results)
     outlier_counts = gdf.groupby(classification_column)["outlier_flag"].sum()
@@ -128,7 +101,6 @@ def perform_global_analysis(gdf, classification_column, cluster_results):
 
     # Cluster similarity analysis
     similarity_results = cluster_similarity_analysis(gdf, classification_column)
-
     # Find clusters with highest and lowest outlier ratios
     highest_outlier_cluster = max(
         cluster_results, key=lambda x: cluster_results[x]["outlier_ratio"]
@@ -136,8 +108,6 @@ def perform_global_analysis(gdf, classification_column, cluster_results):
     lowest_outlier_cluster = min(
         cluster_results, key=lambda x: cluster_results[x]["outlier_ratio"]
     )
-
-    # Print summary information
     print(f"Silhouette and Davies-Bouldin scores: {similarity_results}")
     print(
         f"Cluster with highest outlier ratio: {highest_outlier_cluster}, "
@@ -350,23 +320,18 @@ def entropy_weighting(cluster_gdf):
     numeric_columns = cluster_gdf.select_dtypes(include=[float, int]).columns
     n = len(cluster_gdf)
     entropy = {}
-
     for col in numeric_columns:
         # Normalize the values between 0 and 1
         normalized_col = (cluster_gdf[col] - cluster_gdf[col].min()) / (
             cluster_gdf[col].max() - cluster_gdf[col].min()
         )
-
         # Avoid log(0) by replacing 0 with a small value
         normalized_col[normalized_col == 0] = 1e-10
-
         # Calculate probabilities for each value
         p = normalized_col / normalized_col.sum()
-
         # Calculate entropy for this column
         entropy_col = -np.sum(p * np.log(p)) / np.log(n)
         entropy[col] = entropy_col
-
     return pd.Series(entropy).sort_values(ascending=False)
 
 
@@ -375,11 +340,9 @@ def plot_flexibility_score(gdf, results, cluster_name):
     stats = results["basic_stats"]
     stds = stats["std"]  # Extract the 'std' column from the stats DataFrame
     sorted_stds = stds.sort_values()
-
     # Calculate entropy weights
     entropy_weights = entropy_weighting(gdf)
     sorted_entropy = entropy_weights.sort_values()
-
     # Normalize both SD and entropy for better combination
     normalized_stds = (sorted_stds - sorted_stds.min()) / (
         sorted_stds.max() - sorted_stds.min()
@@ -387,38 +350,31 @@ def plot_flexibility_score(gdf, results, cluster_name):
     normalized_entropy = (sorted_entropy - sorted_entropy.min()) / (
         sorted_entropy.max() - sorted_entropy.min()
     )
-
     # Combine both normalized metrics to get a flexibility score
     flexibility_score = (
         normalized_stds + normalized_entropy
     ) / 2  # Averaging both for flexibility score
-
     # Plot the flexibility score
     plt.figure(figsize=(14, 8))
     bars = plt.bar(
         flexibility_score.index, flexibility_score, color="skyblue", width=0.8
     )
-
     # Find indices of the top 2 most flexible and bottom 2 strictest metrics
     top_2_flexible_indices = flexibility_score.nlargest(2).index
     bottom_2_strict_indices = flexibility_score.nsmallest(2).index
-
     # Highlight the top 2 flexible (green) and bottom 2 strict (red) metrics
     for idx in top_2_flexible_indices:
         bars[flexibility_score.index.get_loc(idx)].set_color("green")  # Top 2 flexible
     for idx in bottom_2_strict_indices:
         bars[flexibility_score.index.get_loc(idx)].set_color("red")  # Bottom 2 strict
-
     # Additionally, highlight all metrics with flexibility score close to 0 (threshold)
     threshold = 0.05
     close_to_zero_indices = flexibility_score[flexibility_score < threshold].index
     for idx in close_to_zero_indices:
         bars[flexibility_score.index.get_loc(idx)].set_color("red")
-
         # Add a minimum height to make them visible
         bar_height = max(flexibility_score[idx], 0.02)
         bars[flexibility_score.index.get_loc(idx)].set_height(bar_height)
-
         # Add text labels above the bars to show their actual values
         plt.text(
             flexibility_score.index.get_loc(idx),
@@ -431,12 +387,10 @@ def plot_flexibility_score(gdf, results, cluster_name):
 
     # Rotate x-tick labels for better readability
     plt.xticks(rotation=45, ha="right")
-
     # Add title and labels
     plt.title(f"Flexibility Score of Metrics for Cluster {cluster_name}", fontsize=16)
     plt.xlabel("Metrics")
     plt.ylabel("Flexibility Score (Avg of SD and Entropy)")
-
     # Show the plot
     plt.tight_layout()
     plt.show()
@@ -549,6 +503,48 @@ def classify_outliers(gdf, results):
     return gdf  # Return the updated gdf with the outlier_flag
 
 
+def output_cluster_stats(cluster_label, results):
+    """
+    Function to save the cluster's basic statistics, flexibility scores, and other results into a CSV.
+    Args:
+        cluster_label: The name or label of the cluster.
+        result: The analysis result containing stats, VIF, flexibility scores, etc.
+        output_filename: Name of the CSV file to save the results.
+    """
+    # Extract relevant data from the result dictionary
+    results = results[cluster_label]
+    stats = results["basic_stats"]
+    flexibility_score = results["flexibility_score"]
+    vif_data = results["vif"]
+
+    # Sort flexibility score in decreasing order
+    sorted_flexibility = flexibility_score.sort_values(ascending=False)
+
+    # Merge basic statistics with sorted flexibility score
+    combined_df = stats.copy()
+    combined_df["Flexibility Score"] = flexibility_score
+    combined_df = combined_df.sort_values(by="Flexibility Score", ascending=False)
+
+    # Add the VIF scores to the same DataFrame
+    combined_df = combined_df.merge(
+        vif_data.set_index("feature"), left_index=True, right_index=True, how="left"
+    )
+    combined_df["Cluster"] = cluster_label
+    combined_df = combined_df.round(2)
+    return combined_df
+
+
+def varify_cleaned_gdf(gdf):
+    threshold = len(gdf) * 0.5
+    gdf = gdf.dropna(axis=1, thresh=threshold)
+    gdf.fillna(0, inplace=True)
+    gdf.drop(
+        columns=["street_index", "junction_index", "tID", "tess_covered_area"],
+        inplace=True,
+    )
+    return gdf
+
+
 def analyze(gdf, csv_folder_path):
     gdf, results = analyze_gdf(gdf, "cluster", csv_folder_path)
     return gdf, results
@@ -557,19 +553,6 @@ def analyze(gdf, csv_folder_path):
 if __name__ == "__main__":
     file_path = "../gpkg_files/modiin.gpkg"
     gdf = gpd.read_file(file_path)
-    print("cluster" in gdf.columns)
-
-    # gdf.drop(columns="geometry").to_csv("output.csv", index=False)
-    threshold = len(gdf) * 0.5
-
-    # Step 1: Remove columns with more than 50% NaNs
-    gdf = gdf.dropna(axis=1, thresh=threshold)
-
-    # Step 2: Replace remaining NaNs with 0 in the remaining columns
-    gdf.fillna(0, inplace=True)
-    gdf.drop(
-        columns=["street_index", "junction_index", "tID", "tess_covered_area"],
-        inplace=True,
-    )
-
-    analyze_gdf(gdf, "cluster", "../output_CSVs")
+    gdf = varify_cleaned_gdf(gdf)
+    gdf, results = analyze_gdf(gdf, "cluster", "../output_CSVs")
+    output_cluster_stats(3, results)
