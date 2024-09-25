@@ -1,5 +1,6 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
+
 # from matplotlib.lines import Line2D
 # from shapely.geometry import Point
 from sklearn.decomposition import PCA
@@ -20,23 +21,28 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
 from scipy.stats import entropy
 from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
+
 # from esda.moran import Moran
 # import libpysal
 # from esda.getisord import G
 # from sklearn.cluster import KMeans
 import geopandas as gpd
+
 # from scipy.stats import skew, kurtosis, zscore
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
 # from sklearn.manifold import TSNE
 # import umap.umap_ as umap
 # from scipy.spatial.distance import pdist, squareform
 # from scipy.cluster.hierarchy import dendrogram, linkage
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
+
 # from scipy.stats import entropy
 # import shap
 from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
+
 # import os
 import plot_funcs as pf
 
@@ -544,13 +550,8 @@ def classify_outliers(gdf, results):
 
 
 def analyze(gdf, csv_folder_path):
-<<<<<<< HEAD
     gdf, results = analyze_gdf(gdf, "cluster", csv_folder_path)
     return gdf, results
-=======
-    gdf = analyze_gdf(gdf, "cluster", csv_folder_path)
-    return gdf
->>>>>>> bcf406b19b3f1f2da1f3b61c9778183a4bfe44d8
 
 
 if __name__ == "__main__":
