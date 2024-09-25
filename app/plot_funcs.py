@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import pandas as pd
 import matplotlib.colors as mcolors
 
@@ -23,7 +22,7 @@ def plot_outliers(gdf, results, classification_column):
         if cluster_outliers.empty:
             continue  # Skip clusters with no outliers
         cluster_outliers.plot(
-            # ax=ax, marker="o", color=cmap(i), label=f"Cluster {cluster} Outliers"
+            ax=ax, marker="o", color=cmap(i), label=f"Cluster {cluster} Outliers"
         )
         cluster_colors[cluster] = cmap(i)  # Store color for future use
 
@@ -159,43 +158,20 @@ def save_flexibility_scores_to_csv(results, output_filename="flexibility_scores.
     flexibility_df.to_csv(output_filename, index=False)
 
 
-def save_cluster_analysis_to_csv(cluster_label, result, path):
-    """
-    Function to save the cluster's basic statistics, flexibility scores, and other results into a CSV.
-    Args:
-        cluster_label: The name or label of the cluster.
-        result: The analysis result containing stats, VIF, flexibility scores, etc.
-        output_filename: Name of the CSV file to save the results.
-    """
-    # Extract relevant data from the result dictionary
-    stats = result["basic_stats"]
-    flexibility_score = result["flexibility_score"]
-    vif_data = result["vif"]
-
-    # Sort flexibility score in decreasing order
-    sorted_flexibility = flexibility_score.sort_values(ascending=False)
-
-    # Merge basic statistics with sorted flexibility score
-    combined_df = stats.copy()
-    combined_df["Flexibility Score"] = flexibility_score
-    combined_df = combined_df.sort_values(by="Flexibility Score", ascending=False)
-
-    # Add the VIF scores to the same DataFrame
-    combined_df = combined_df.merge(
-        vif_data.set_index("feature"), left_index=True, right_index=True, how="left"
-    )
-
-    # Add a column for the cluster label
-    combined_df["Cluster"] = cluster_label
-
-    # Round all numeric values to 2 decimal places
-    combined_df = combined_df.round(2)
-
-    # Save the combined data to a CSV
-    combined_df.to_csv(path, index=True)
+def plot_top_important_metrics(feature_importances):
+    plt.figure(figsize=(10, 6))
+    feature_importances.head(10).plot(
+        kind="bar", color="skyblue"
+    )  # Plot the top 10 features
+    plt.title("Top 10 metrics that influence the classification the most")
+    plt.ylabel("Feature Importance")
+    plt.xlabel("Metrics")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    plt.show()
 
 
-def plot_overall_leading_metrics(results):
+def plot_overall_flexibility(results):
     """
     Plot the overall leading metrics across all clusters based on flexibility score.
     """

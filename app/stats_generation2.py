@@ -1,8 +1,5 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
-
-# from matplotlib.lines import Line2D
-# from shapely.geometry import Point
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
@@ -21,33 +18,15 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
 from scipy.stats import entropy
 from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
-
-# from esda.moran import Moran
-# import libpysal
-# from esda.getisord import G
-# from sklearn.cluster import KMeans
 import geopandas as gpd
-
-# from scipy.stats import skew, kurtosis, zscore
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-
-# from sklearn.manifold import TSNE
-# import umap.umap_ as umap
-# from scipy.spatial.distance import pdist, squareform
-# from scipy.cluster.hierarchy import dendrogram, linkage
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
-
-# from scipy.stats import entropy
-# import shap
 from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
-
-# import os
 import plot_funcs as pf
 
 local_crs = "EPSG:2039"
-
 """
 for each classification:
 - basic stats: mean, variance, min, max, 
@@ -77,15 +56,23 @@ def analyze_gdf(gdf, classification_column, csv_folder_path):
     global_summary = perform_global_analysis(
         gdf, classification_column, cluster_results
     )
-    # Plot relevant information
-    plot_all_cluster_results(
-        gdf, cluster_results, classification_column, global_summary
-    )
+
+    # # Plot cluster information
+    # plot_all_cluster_results(
+    #     gdf, cluster_results, classification_column, global_summary
+    # )
+    # # plot global information
+    # pf.plot_top_important_metrics(global_summary["supervised_importances"])
+
     # Add another layers to the gdf
     gdf = classify_outliers(gdf, cluster_results)
     outlier_counts = gdf.groupby(classification_column)["outlier_flag"].sum()
     print(outlier_counts)
-    return gdf, cluster_results
+    return (
+        gdf,
+        cluster_results,
+        global_summary,
+    )  # for getting the leading metrics: global_summary[]
 
 
 def perform_global_analysis(gdf, classification_column, cluster_results):
@@ -108,15 +95,6 @@ def perform_global_analysis(gdf, classification_column, cluster_results):
     lowest_outlier_cluster = min(
         cluster_results, key=lambda x: cluster_results[x]["outlier_ratio"]
     )
-    print(f"Silhouette and Davies-Bouldin scores: {similarity_results}")
-    print(
-        f"Cluster with highest outlier ratio: {highest_outlier_cluster}, "
-        f"Ratio: {cluster_results[highest_outlier_cluster]['outlier_ratio']:.2f}"
-    )
-    print(
-        f"Cluster with lowest outlier ratio: {lowest_outlier_cluster}, "
-        f"Ratio: {cluster_results[lowest_outlier_cluster]['outlier_ratio']:.2f}"
-    )
 
     # Return global summary
     global_summary = {
@@ -125,7 +103,6 @@ def perform_global_analysis(gdf, classification_column, cluster_results):
         "highest_outlier_cluster": highest_outlier_cluster,
         "lowest_outlier_cluster": lowest_outlier_cluster,
     }
-
     return global_summary
 
 
@@ -438,17 +415,6 @@ def supervised_leading_metrics(gdf, classification_column):
     print(feature_importances.head(10))  # Top 10 most important metrics
 
     # Plot bar chart for feature importances
-    plt.figure(figsize=(10, 6))
-    feature_importances.head(10).plot(
-        kind="bar", color="skyblue"
-    )  # Plot the top 10 features
-    plt.title("Top 10 metrics that influence the classification the most")
-    plt.ylabel("Feature Importance")
-    plt.xlabel("Metrics")
-    plt.xticks(rotation=45, ha="right")
-    plt.tight_layout()
-    plt.show()
-
     return feature_importances
 
 
@@ -554,5 +520,5 @@ if __name__ == "__main__":
     file_path = "../gpkg_files/modiin.gpkg"
     gdf = gpd.read_file(file_path)
     gdf = varify_cleaned_gdf(gdf)
-    gdf, results = analyze_gdf(gdf, "cluster", "../output_CSVs")
+    gdf, results, global_results = analyze_gdf(gdf, "cluster", "../output_CSVs")
     output_cluster_stats(3, results)
