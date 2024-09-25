@@ -42,17 +42,18 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, h
         streets = load_roads_from_osm(place, network_type=network_type)
     
     streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
-    junctions, streets = metrics.generate_junctions_metrics(streets)
-    buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs, height_name=height_column_name)
+    junctions, streets = metrics.generate_junctions_metrics(streets, user_selections, selected=user_selections)
+    buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, 
+                                 local_crs=local_crs, height_name=height_column_name)
     # Generate tessellation
     tessellations = pp.get_tessellation(buildings=buildings, streets=streets, 
                                         tess_mode='morphometric', clim='adaptive')
 
     # Generate metrics
-    metrics.generate_building_metrics(buildings)
-    queen_1 = metrics.generate_tessellation_metrics(tessellations, buildings)
-    metrics.generate_streets_metrics(streets)
-    queen_3 = metrics.generate_graph_building_metrics(buildings, streets, queen_1)
+    metrics.generate_building_metrics(buildings, height_column_name=height_column_name, selected=user_selections)
+    queen_1 = metrics.generate_tessellation_metrics(tessellations, buildings, selected=user_selections)
+    metrics.generate_streets_metrics(streets, selected=user_selections)
+    queen_3 = metrics.generate_graph_building_metrics(buildings, streets, queen_1, selected=user_selections)
 
     # Merge DataFrames
     merged = md.merge_all_metrics(tessellations, buildings, streets, junctions)
