@@ -302,7 +302,7 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
     try:
         # save to CSV
         csv = convert_df(merged)
-        save_csv(csv)
+        save_csv(csv, file_name='buildings.csv')
         # save to gdb
         if st.button("Download gdb"):
             dataframe_to_gdb(merged, gdb_path, layer_name)

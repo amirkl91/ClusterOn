@@ -123,7 +123,7 @@ if 'urban_types' in st.session_state:
     try:
         # save to CSV
         csv = convert_df(urban_types)
-        save_csv(csv)
+        save_csv(csv, file_name='clusters.csv')
         # save to .gdb
         if st.button("Download gdb"):
             dataframe_to_gdb(urban_types, gdb_path, layer_name)
