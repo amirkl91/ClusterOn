@@ -113,7 +113,7 @@ if st.button("Run classification"):
 ######################### save: #########################
 
 # User inputs for saving paths
-gdb_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/קונטור בניינים/commondata/jps_reka.gdb")
+gdb_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/מרקמים/commondata/myproject16.gdb")
 layer_name = st.text_input("Enter layer name to save the gdb file:", value="clusters")
 
 # Check if data exists in session state before proceeding
