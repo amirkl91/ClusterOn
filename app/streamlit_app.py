@@ -249,7 +249,7 @@ if st.button("Run preprocessing and generate metrics"):
 
 ##################################################
 
-
+#TODO: still didnt find a solution for saving gdb as zip:
 ######################### save: #########################
 
 # User inputs for saving paths
@@ -337,13 +337,10 @@ image_3 = Image.open("app/app_design/flatJerus.JPG")
 
 # Create 3 columns
 col1, col2, col3 = st.columns(3)
-
 # Display each image in its respective column
 with col1:
     st.image(image_1, use_column_width=True)
-
 with col2:
     st.image(image_2, use_column_width=True)
-
 with col3:
     st.image(image_3, use_column_width=True)
