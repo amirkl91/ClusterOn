@@ -3,7 +3,7 @@ import preprocess as pp
 from data_input import load_roads_from_osm, load_gdb_layer
 import metrics
 import merge_dfs as md
-from generate_clusters import get_cgram, add_cluster_col, plot_clusters_st
+from generate_clusters import get_cgram, add_cluster_col, plot_clusters_st, select_best_num_of_clusters
 from data_output import dataframe_to_gdb
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -69,6 +69,14 @@ elif load_existing == "Continue preprocess part":
         st.sidebar.write(merged.head())  # Preview the merged DataFrame
     else:
         st.sidebar.warning("You have to run preprocess part first. Please upload a ZIP file.")
+
+# recommend clusters
+if st.button("Recommend number of clusters"):
+    if 'merged' in st.session_state:
+        rec_num = select_best_num_of_clusters(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
+                                        max_clusters=15,
+                                        n_init=13, random_state=42, plot=False)
+        st.write(f"The number of clusters we recommend is {rec_num}")
 
 num_clusters = st.selectbox("Select number of clusters:", options=range(2, 21), index=5)
 # Run classification button
