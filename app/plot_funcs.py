@@ -23,7 +23,7 @@ def plot_outliers(gdf, results, classification_column):
         if cluster_outliers.empty:
             continue  # Skip clusters with no outliers
         cluster_outliers.plot(
-            ax=ax, marker="o", color=cmap(i), label=f"Cluster {cluster} Outliers"
+            # ax=ax, marker="o", color=cmap(i), label=f"Cluster {cluster} Outliers"
         )
         cluster_colors[cluster] = cmap(i)  # Store color for future use
 
