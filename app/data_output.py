@@ -65,7 +65,7 @@ def save_csv(csv, file_name):
     st.download_button(
         label=f"Download CSV",
         data=csv,
-        file_name='buildings.csv',
+        file_name=file_name,
         mime='text/csv'
     )
 
