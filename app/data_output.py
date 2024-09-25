@@ -60,7 +60,7 @@ def dataframe_to_gdb(dataframe, gdb_path, layer_name):
     print(f"Data exported to {gdb_path} with layer name '{layer_name}'")
 
 # A function saves the dataframes and creates download link
-def save_csv(csv):
+def save_csv(csv, file_name):
     # Create download links
     st.download_button(
         label=f"Download CSV",
