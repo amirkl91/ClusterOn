@@ -47,7 +47,7 @@ def _clusters_scores(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, mi
     :return: most suitable number of clusters
     """
     scores = {'K': [i for i in range(min_clusters, max_clusters + 1) if i > 1]}
-    cgram = _get_cluster(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
+    cgram = get_cluster(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
 
     scores['silhouette'] = cgram.silhouette_score()
     scores['davies_bouldin'] = cgram.davies_bouldin_score()
@@ -55,7 +55,7 @@ def _clusters_scores(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, mi
     return pd.DataFrame(scores)
 
 
-def _get_cluster(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1, max_clusters=15, n_init=13, random_state=42):
+def get_cluster(gdf: gpd.GeoDataFrame, model='kmeans', standardize=False, min_clusters=1, max_clusters=15, n_init=13, random_state=42):
     if standardize:
         gdf = (gdf - gdf.mean()) / gdf.std()
     K = range(min_clusters, max_clusters + 1)
@@ -79,11 +79,11 @@ def best_davies_bouldin_score(gdf: gpd.GeoDataFrame, model='kmeans', standardize
     :param repeat: number of times to calculate the davies bouldin score over different runs
     :return: sorted list of the best number of clusters based on the davies bouldin score
     """
-    K = range(min_clusters, max_clusters + 1)
+    K = range(min_clusters, max_clusters)
     best_scores = {k:0 for k in K}
     for i in range(repeat):
-        cgram = _get_cluster(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
-        davis_bouldin = cgram.davies_bouldin_score()
+        cgram = get_cluster(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
+        davis_bouldin = cgram.davies_bouldin_score().iloc[:-1]
         l = 0
         for index, value in davis_bouldin.sort_values(ascending=False).items():
             best_scores[index] += l
