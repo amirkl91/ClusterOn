@@ -3,7 +3,6 @@ import preprocess as pp
 from data_input import load_roads_from_osm, load_gdb_layer, load_buildings_from_osm
 import metrics
 import merge_dfs as md
-from generate_clusters import get_cgram, add_cluster_col, plot_clusters_st
 from data_output import dataframe_to_gdb, save_csv
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -42,6 +41,7 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, h
         streets = load_roads_from_osm(place, network_type=network_type)
     
     streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
+    junctions, streets = metrics.generate_junctions_metrics(streets)
     buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs, height_name=height_column_name)
     # Generate tessellation
     tessellations = pp.get_tessellation(buildings=buildings, streets=streets, 
@@ -52,7 +52,6 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, h
     queen_1 = metrics.generate_tessellation_metrics(tessellations, buildings)
     metrics.generate_streets_metrics(streets)
     queen_3 = metrics.generate_graph_building_metrics(buildings, streets, queen_1)
-    junctions, streets = metrics.generate_junctions_metrics(streets)
 
     # Merge DataFrames
     merged = md.merge_all_metrics(tessellations, buildings, streets, junctions)

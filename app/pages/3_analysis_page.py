@@ -28,7 +28,7 @@ if urban_types is not None:
     cluster_column_name = "cluster"
     st.sidebar.success("Preprocessed data loaded by default.")
 else:
-    st.sidebar.warning("Preprocessed data not found. Please upload a ZIP file.")
+    st.sidebar.warning("Preprocessed data not found. Please upload a file.")
 
 # Always provide option to upload a ZIP file
 uploaded_file = st.sidebar.file_uploader("Upload the csv clusters file from part 2", type=["csv"])
