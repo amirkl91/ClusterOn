@@ -67,7 +67,7 @@ def generate_graph_building_metrics(buildings, streets, queen_1):
         heights = None
     streets[prof_metrics] = momepy.street_profile(streets, buildings, height=heights)
 
-    buildings["street_index"] = momepy.get_nearest_street(buildings, streets)
+    # buildings["street_index"] = momepy.get_nearest_street(buildings, streets)
     buildings['street_alignment'] = momepy.street_alignment(buildings['orientation'], streets['str_orientation'], buildings["street_index"])
     return queen_3
 

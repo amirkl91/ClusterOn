@@ -30,6 +30,7 @@ streets = load_roads_from_osm(place, network_type=network_type)
 
 #Preprocess
 streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
+junctions, streets = metrics.generate_junctions_metrics(streets)
 buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, local_crs=local_crs, )
 
 tessellations = pp.get_tessellation(buildings=buildings, streets=streets, 
@@ -40,7 +41,6 @@ metrics.generate_building_metrics(buildings)
 queen_1 = metrics.generate_tessellation_metrics(tessellations, buildings)
 metrics.generate_streets_metrics(streets)
 queen_3 = metrics.generate_graph_building_metrics(buildings, streets, queen_1)
-junctions, streets = metrics.generate_junctions_metrics(streets)
 
 ### Merge dataframes
 merged = md.merge_all_metrics(tessellations, buildings, streets, junctions)
