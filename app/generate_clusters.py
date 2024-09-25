@@ -37,7 +37,7 @@ def _elbow(gdf, K: range):
 
 def _clusters_scores(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1,
                      max_clusters=15,
-                     n_init=13, random_state=42, plot=False) -> pd.DataFrame:
+                     n_init=13, random_state=42) -> pd.DataFrame:
     """
     :param gdf: geoDataFrame that contains the data
     :param model: model to use for clustering ['kmeans', 'gmm', 'minibatchkmeans', 'hierarchical']
@@ -47,12 +47,7 @@ def _clusters_scores(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, mi
     :return: most suitable number of clusters
     """
     scores = {'K': [i for i in range(min_clusters, max_clusters + 1) if i > 1]}
-    if standardize:
-        gdf = (gdf - gdf.mean()) / gdf.std()
-    K = range(min_clusters, max_clusters + 1)
-
-    cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
-    cgram.fit(gdf.fillna(0))
+    cgram = _get_cluster(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
 
     scores['silhouette'] = cgram.silhouette_score()
     scores['davies_bouldin'] = cgram.davies_bouldin_score()
@@ -60,9 +55,45 @@ def _clusters_scores(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, mi
     return pd.DataFrame(scores)
 
 
-def select_best_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1,
+def _get_cluster(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1, max_clusters=15, n_init=13, random_state=42):
+    if standardize:
+        gdf = (gdf - gdf.mean()) / gdf.std()
+    K = range(min_clusters, max_clusters + 1)
+
+    cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
+    cgram.fit(gdf.fillna(0))
+    return cgram
+
+
+def best_davies_bouldin_score(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1,
+                     max_clusters=15,
+                     n_init=13, random_state=42,repeat=5):
+    """
+    :param gdf: dataFrame to cluster
+    :param model: model to use for clustering ['kmeans', 'gmm', 'minibatchkmeans', 'hierarchical']
+    :param standardize: standardize the data or not
+    :param min_clusters: minimum number of clusters to consider
+    :param max_clusters: maximum number of clusters to consider
+    :param n_init: number of times to run the clustering
+    :param random_state: random state for k means clustering
+    :param repeat: number of times to calculate the davies bouldin score over different runs
+    :return: sorted list of the best number of clusters based on the davies bouldin score
+    """
+    K = range(min_clusters, max_clusters + 1)
+    best_scores = {k:0 for k in K}
+    for i in range(repeat):
+        cgram = _get_cluster(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
+        davis_bouldin = cgram.davies_bouldin_score()
+        l = 0
+        for index, value in davis_bouldin.sort_values(ascending=False).items():
+            best_scores[index] += l
+            l += 1
+    return sorted(best_scores, key=lambda w: best_scores[w], reverse=True)
+
+
+def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True, min_clusters=1,
                                 max_clusters=15,
-                                n_init=13, random_state=42, plot=False) -> int:
+                                n_init=13, random_state=42):
     """
     :param gdf: geoDataFrame that contains the data
     :param model: model to use for clustering ['kmeans', 'gmm', 'minibatchkmeans', 'hierarchical']
@@ -75,23 +106,33 @@ def select_best_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardi
     scores = _clusters_scores(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
     K = range(min_clusters, max_clusters + 1)
     distortions = _elbow(gdf, K)
-
+    scores['distortion'] = distortions if len(distortions) == len(scores) else distortions[1:]
     best_scores['distortion'] = KneeLocator(K, distortions, curve='convex', direction='decreasing').elbow
-
-    if plot:
-        plt.plot(K, distortions, 'bx-')
-        plt.vlines(best_scores['distortion'], plt.ylim()[0], plt.ylim()[1], linestyles='dashed')
-        plt.xlabel('Number of clusters')
-        plt.ylabel('distortion')
-        plt.title(f'Elbow at k = {best_scores['distortion']}')
-        plt.show()
-
     best_scores['silhouette'] = scores.loc[scores['K'] == scores['silhouette'].idxmax()]['K'].values[0]
     best_scores['davies_bouldin'] = scores.loc[scores['K'] == scores['davies_bouldin'].idxmin()]['K'].values[0]
     best_scores['calinski_harabasz'] = scores.loc[scores['K'] == scores['calinski_harabasz'].idxmax()]['K'].values[0]
-    print(scores)
-    print(best_scores)
-    return Counter(list(best_scores.values())).most_common(1)[0][0]
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8))  # 2x2 grid of subplots
+
+    # List of methods to plot
+    methods = scores.columns[1:]
+
+    # Iterate through each method and create a plot
+    for i, method in enumerate(methods):
+        print(method, best_scores[method])
+        ax = axes[i // 2, i % 2]  # Positioning subplots in 2x2 grid
+        ax.plot(scores['K'], scores[method], marker='o', label=method)
+        ax.vlines(best_scores[method], ax.get_ylim()[0], ax.get_ylim()[1], linestyles='dashed')
+        ax.set_title(f'Score for {method}')
+        ax.set_xlabel('k')
+        ax.set_ylabel('Score')
+        ax.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    return fig,axes
+
+
 
 
 def get_cgram(standardized, max_range):
