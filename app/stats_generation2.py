@@ -1,8 +1,5 @@
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-from shapely.geometry import Point
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
@@ -11,24 +8,15 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import LocalOutlierFactor
 import seaborn as sns
 import pandas as pd
-from esda.moran import Moran
-import libpysal
-from esda.getisord import G
-from sklearn.cluster import KMeans
 import geopandas as gpd
-from scipy.stats import skew, kurtosis, zscore
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import TSNE
-import umap.umap_ as umap
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import dendrogram, linkage
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import numpy as np
 from scipy.stats import entropy
-import shap
 from sklearn.metrics import silhouette_samples, silhouette_score, davies_bouldin_score
-import os
 import plot_funcs as pf
 
 local_crs = "EPSG:2039"
@@ -93,7 +81,7 @@ def analyze_gdf(gdf, classification_column, csv_folder_path):
     print(gdf["outlier_flag"])
     outlier_counts = gdf.groupby(classification_column)["outlier_flag"].sum()
     print(outlier_counts)
-    return gdf
+    return gdf, cluster_results
 
 
 def perform_global_analysis(gdf, classification_column, cluster_results):
@@ -532,8 +520,8 @@ def classify_outliers(gdf, results):
 
 
 def analyze(gdf, csv_folder_path):
-    gdf = analyze_gdf(gdf, "cluster", csv_folder_path)
-    return gdf
+    gdf, results = analyze_gdf(gdf, "cluster", csv_folder_path)
+    return gdf, results
 
 
 if __name__ == "__main__":
