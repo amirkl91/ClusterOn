@@ -94,6 +94,6 @@ if st.button("Run classification"):
         cgram = get_cgram(standardized, num_clusters)
         urban_types = add_cluster_col(merged, buildings, cgram, num_clusters-1)
         plot_clusters_st(urban_types) #TODO: need to fix plotting
-        #TODO: need to check the reslts for other city than Jerusalem
+        #TODO: need to check the results for other city than Jerusalem
     else:
         st.warning("Please ensure all data is loaded before running classification.")
