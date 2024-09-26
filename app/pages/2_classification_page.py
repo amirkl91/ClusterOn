@@ -12,8 +12,6 @@ def init_session_state():
         st.session_state.rec_list = None
     if 'merged' not in st.session_state:
         st.session_state['merged'] = None
-    if 'metrics_with_percentiles' not in st.session_state:
-        st.session_state['metrics_with_percentiles'] = None
     if 'standardized' not in st.session_state:
         st.session_state['standardized'] = None
     if 'buildings' not in st.session_state:
@@ -32,7 +30,7 @@ def convert_df(_df):
 def process_uploaded_zip(uploaded_zip):
     try:
         with zipfile.ZipFile(uploaded_zip, 'r') as zip_ref:
-            expected_files = ["merged.gpkg", "metrics_with_percentiles.csv", "standardized.csv", "buildings.gpkg"]
+            expected_files = ["merged.gpkg", "standardized.csv", "buildings.gpkg"]
             zip_file_names = zip_ref.namelist()
             missing_files = [file for file in expected_files if file not in zip_file_names]
 
@@ -40,12 +38,10 @@ def process_uploaded_zip(uploaded_zip):
                 st.error(f"Missing files in the ZIP: {', '.join(missing_files)}")
             else:
                 merged_df = gpd.read_file(zip_ref.open("merged.gpkg"))
-                metrics_df = pd.read_csv(zip_ref.open("metrics_with_percentiles.csv"))
                 standardized_df = pd.read_csv(zip_ref.open("standardized.csv"))
                 buildings_df = gpd.read_file(zip_ref.open("buildings.gpkg"))
 
                 st.session_state['merged'] = merged_df
-                st.session_state['metrics_with_percentiles'] = metrics_df
                 st.session_state['standardized'] = standardized_df
                 st.session_state['buildings'] = buildings_df
 
@@ -81,7 +77,7 @@ def show_cluster_plots():
         st.session_state.cluster_fig = cluster_fig
 
 def run_classification(clusters_num):
-    if all(key in st.session_state and not st.session_state[key].empty for key in ['merged', 'standardized', 'metrics_with_percentiles', 'buildings']):
+    if all(key in st.session_state and not st.session_state[key].empty for key in ['merged', 'standardized', 'buildings']):
         merged = st.session_state['merged']
         standardized = st.session_state['standardized']
         buildings = st.session_state['buildings']
