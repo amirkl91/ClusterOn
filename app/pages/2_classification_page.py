@@ -12,6 +12,7 @@ import os
 import fiona
 import zipfile
 import tempfile
+import geopandas as gpd
 
 @st.cache_data
 def convert_df(_df):
@@ -45,12 +46,6 @@ if merged is not None and standardized is not None and percentiles is not None a
     st.sidebar.success("Preprocessed data loaded by default.")
 else:
     st.sidebar.warning("Preprocessed data not found. Please upload a ZIP file.")
-
-# Always provide option to upload a ZIP file
-uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
-
-# Always provide option to upload a ZIP file
-uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
 
 # Always provide option to upload a ZIP file
 uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
@@ -108,7 +103,18 @@ if st.button("Show Recommendation Calculation Plots"):
         st.pyplot(cluster_fig)
         
 # Input number of clusters from an unrestricted text box
-clusters_num = st.text_input("Enter the number of clusters:")
+clusters_num = st.text_input("Enter the number of clusters:", value="7")
+try:
+    # Convert the input to an integer
+    clusters_num = int(clusters_num)
+    
+    if clusters_num < 1:
+        st.warning("Please enter a number greater than 0.")
+    else:
+        st.success(f"You have selected {clusters_num} clusters.")
+        
+except ValueError:
+    st.error("Please enter a valid integer for the number of clusters.")
 # Run classification button
 if st.button("Run classification"):
     # Ensure all necessary data is available
@@ -121,8 +127,7 @@ if st.button("Run classification"):
 
         urban_types = add_cluster_col(merged, buildings, standardized, clusters_num)
         st.session_state['urban_types'] = urban_types
-        plot_clusters_st(urban_types) #TODO: need to fix plotting
-        #TODO: need to check the results for other city than Jerusalem
+        plot_clusters_st(urban_types)
     else:
         st.warning("Please ensure all data is loaded before running classification.")
 
