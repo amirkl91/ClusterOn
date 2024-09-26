@@ -20,8 +20,16 @@ def convert_df(_df):
 
 # Streamlit App Title
 st.title("Morphological Analysis Tool 🌍📌📏")
-st.sidebar.markdown("# Classification of city textures 🗺️")
-
+st.markdown("# Part 2: Classification of City Textures 🗺️")
+# Description paragraph
+st.markdown("""
+    ## How to Classify City Textures:
+    1. After completing Part 1 (Data Preprocessing), you have two options to proceed:
+        - Directly move on to Part 2, as the processed data is already saved.
+        - Alternatively, upload the ZIP file generated in Part 1.
+    2. (Optional) You can request a recommendation for the optimal number of clusters to divide the city.
+    3. Run the classification to visualize the results and download the output.
+    """)
 ######################### upload: #########################
 
 # Sidebar for uploading files
@@ -39,7 +47,7 @@ else:
     st.sidebar.warning("Preprocessed data not found. Please upload a ZIP file.")
 
 # Always provide option to upload a ZIP file
-uploaded_zip = st.sidebar.file_uploader("Upload the ZIP file from part 1", type=["zip"])
+uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
 
 if uploaded_zip is not None:
     try:
@@ -133,9 +141,7 @@ if 'urban_types' in st.session_state:
             dataframe_to_gdb(urban_types, gdb_path, layer_name)
             st.success(f"Files successfully saved to {gdb_path}")
         # save to gpkg
-        st.write('before o')
         save_gdf_to_gpkg(urban_types, gpkg_path)
-        st.write('after o')
     except Exception as e:
         st.error(f"An error occurred while saving: {e}")
 else:
