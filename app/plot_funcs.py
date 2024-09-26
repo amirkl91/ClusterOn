@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import matplotlib.colors as mcolors
+import streamlit as st
 
 
 def plot_outliers(gdf, results, classification_column):
@@ -314,3 +315,130 @@ def plot_cluster_similarity(silhouette_values, target, silhouette_avg):
     ax1.set_xlabel("Silhouette coefficient values")
     ax1.set_ylabel("Cluster label")
     plt.show()
+
+
+#########################################streamlit#############################
+
+
+def streamlit_plot_top_important_metrics(feature_importances):
+    # Create a figure and axis for plotting
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot the top 10 features
+    feature_importances.head(10).plot(kind="bar", color="skyblue", ax=ax)
+
+    # Set the title and labels
+    ax.set_title("Top 10 metrics that influence the classification the most")
+    ax.set_ylabel("Feature Importance")
+    ax.set_xlabel("Metrics")
+
+    # Rotate x-tick labels for better readability
+    plt.xticks(rotation=45, ha="right")
+
+    # Adjust layout for a clean look
+    plt.tight_layout()
+
+    # Use Streamlit to display the plot
+    st.pyplot(fig)
+
+
+def streamlit_plot_flexibility_scores_table(results):
+    """
+    Function to display a table showing the top 5 and bottom 5 flexibility scores for each cluster
+    in Streamlit.
+    """
+    # Prepare data for the table
+    table_data = []
+
+    # Iterate over each cluster's results
+    for cluster, result in results.items():
+        flexibility_score = result["flexibility_score"]
+
+        # Get the top 5 and bottom 5 metrics by flexibility score
+        top_5_metrics = flexibility_score.nlargest(5)
+        bottom_5_metrics = flexibility_score.nsmallest(5)
+
+        # Add top 5 and bottom 5 metrics as separate columns for metric names and values
+        top_5_metrics_names = ", ".join(top_5_metrics.index)
+        top_5_metrics_values = ", ".join(
+            [f"{score:.2f}" for score in top_5_metrics.values]
+        )
+        bottom_5_metrics_names = ", ".join(bottom_5_metrics.index)
+        bottom_5_metrics_values = ", ".join(
+            [f"{score:.2f}" for score in bottom_5_metrics.values]
+        )
+
+        # Add the data to the table
+        table_data.append(
+            {
+                "Cluster": f"Cluster {cluster}",
+                "Top 5 Flexible Metrics": top_5_metrics_names,
+                "Top 5 Flexibility Scores": top_5_metrics_values,
+                "Bottom 5 Strict Metrics": bottom_5_metrics_names,
+                "Bottom 5 Strict Scores": bottom_5_metrics_values,
+            }
+        )
+
+    # Convert the table data to a DataFrame
+    df = pd.DataFrame(table_data)
+
+    # Display the table in Streamlit
+    st.write("### Top 5 and Bottom 5 Flexibility Scores for Each Cluster")
+    st.dataframe(df)
+
+
+def streamlit_plot_outliers(gdf, results, classification_column):
+    """
+    Function to plot the outliers from all clusters in different colors, adapted for Streamlit.
+    """
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot the base map (all buildings/streets)
+    gdf.plot(ax=ax, color="lightgrey", label="All elements")
+
+    # Collect all outliers from each cluster and plot them
+    cmap = plt.get_cmap("tab10")  # Use a colormap for distinct colors
+    cluster_colors = {}
+
+    for i, cluster in enumerate(results.keys()):
+        cluster_outliers = results[cluster]["outliers"]
+        if cluster_outliers.empty:
+            continue  # Skip clusters with no outliers
+        cluster_outliers.plot(
+            ax=ax, marker="o", color=cmap(i), label=f"Cluster {cluster} Outliers"
+        )
+        cluster_colors[cluster] = cmap(i)  # Store color for future use
+
+    plt.title("Outliers for All Clusters")
+    plt.legend()
+    plt.tight_layout()
+
+    # Use Streamlit to display the plot
+    st.pyplot(fig)
+
+
+def streamlit_plot_overall_vif(results):
+    """
+    Function to plot the overall VIF (Variance Inflation Factor) across all clusters, adapted for Streamlit.
+    """
+    # Gather all VIF data from each cluster
+    vif_df = pd.DataFrame()
+
+    for cluster, result in results.items():
+        vif_cluster = result["vif"]
+        vif_df = pd.concat([vif_df, vif_cluster.set_index("feature")], axis=1)
+
+    # Calculate the mean VIF for each feature across all clusters
+    vif_mean = vif_df.mean(axis=1)
+
+    # Plot the overall VIF
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(vif_mean.index, vif_mean, color="purple")
+    ax.set_title("Overall (VIF) - how a metric is correlated to all others")
+    ax.set_xticklabels(vif_mean.index, rotation=45, ha="right")
+    plt.xlabel("Features")
+    plt.ylabel("Mean VIF Across Clusters")
+    plt.tight_layout()
+
+    # Use Streamlit to display the plot
+    st.pyplot(fig)
