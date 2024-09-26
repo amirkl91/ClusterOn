@@ -7,6 +7,7 @@ import tempfile
 import geopandas as gpd
 
 ######################### Session state initialization #########################
+@st.cache_data
 def init_session_state():
     if 'rec_list' not in st.session_state:
         st.session_state.rec_list = None
