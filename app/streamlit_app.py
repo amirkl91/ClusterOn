@@ -253,10 +253,6 @@ if st.button("Run preprocessing and generate metrics"):
 #TODO: still didnt find a solution for saving gdb as zip:
 ######################### save: #########################
 
-# User inputs for saving paths
-gdb_path = st.text_input("Enter the path to save the gdb file:", value="commondata/jps_reka.gdb")
-layer_name = st.text_input("Enter layer name to save the gdb file:", value="all_metrics")
-
 # Check if data exists in session state before proceeding
 if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_state and 'standardized' in st.session_state and 'buildings' in st.session_state:
     merged = st.session_state['merged']
@@ -299,10 +295,6 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
             st.error(f"An error occurred while saving the ZIP file: {e}")
 
         try:
-            # save to gdb
-            if st.button("Download .gdb"):
-                dataframe_to_gdb(merged, gdb_path, layer_name)
-                st.success(f"Files successfully saved to {gdb_path}")
             # save to shp
             bldg_shp_path = os.path.join(tmpdirname, 'buildings.shp.zip')
             str_shp_path = os.path.join(tmpdirname, 'streets.shp.zip')
