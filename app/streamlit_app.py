@@ -5,6 +5,7 @@ import metrics
 import merge_dfs as md
 # from data_output import dataframe_to_gdb, save_csv, save_gdf_to_gpkg
 import matplotlib.pyplot as plt
+import contextily as ctx
 import pandas as pd
 import momepy
 import os
@@ -149,8 +150,17 @@ def zip_data(tempdir, _streets, _buildings):
     st.session_state['metrics_zip'] = metrics_zip
     return metrics_zip
 
+def plot_metric(buildings, streets, data_toplot, metric_toplot):
+    fig, ax = plt.subplots(figsize=(10,10))
+    buildings.plot(ax=ax, color='blue', alpha=0.25)
+    streets.plot(ax=ax, color='black', linewidth=0.1, alpha=0.25)
+    data_toplot.plot(ax=ax, column=metric_toplot, cmap='Spectral', scheme='naturalbreaks', legend=True)
+    ax.set_axis_off()
+    ctx.add_basemap(ax=ax, crs=streets.crs, source=ctx.providers.CartoDB.Positron)
+    return fig
+    
 # List of metrics
-metrics_list = [
+metrics_list = sorted([
     'squareness',
     'perimeter',
     'shape_index',
@@ -203,7 +213,7 @@ metrics_list = [
     'node_density',
     'node_density_weighted',
     'straightness'
-]
+])
 
 # Create a dictionary to store user selections
 user_selections = {}
@@ -240,7 +250,7 @@ with datacol:
         for i, metric in enumerate(metrics_list):
             col_index = i % num_columns  # Determine the column index
             with columns[col_index]:
-                is_selected = st.checkbox(f"{metric.capitalize()}", value=True)
+                is_selected = st.checkbox(f"{metric.capitalize().replace('_',' ')}", value=True)
                 
                 # Save the user's choice (True/False) in the dictionary
                 user_selections[metric] = is_selected
@@ -342,16 +352,75 @@ with datacol:
 ### Plots side of app
 with plotcol:
     if 'computed_metrics' in st.session_state:
+          
+        bldg_metrics_toplot = [
+            'adjacency',
+            'alignment',
+            'Area',
+            'circular_compactness',
+            'corners',
+            'courtyard_area',
+            'courtyards_num',
+            'elongation',
+            'equivalent_rectangular_index',
+            'facade_ratio',
+            'fractal_dimension',
+            'longest_axis_length',
+            'mean_interbuilding_distance',
+            'neighbor_distance',
+            'orientation',
+            'perimeter',
+            'rectangularity',
+            'shape_index',
+            'shared_walls_length',
+            'square_compactness',
+            'squareness',
+            'street_alignment',
+            'closeness',
+            'degree',
+            'gamma',
+            'mean_nd',
+            'meshedness',
+            'straightness',
+        ]
+
+        str_metrics_toplot = [
+            'openness',
+            'str_length',
+            'str_linearity',
+            'str_longest_axis',
+            'str_orientation',
+            'width',
+            'width_dev',
+        ]
+        
+        buildings = st.session_state['buildings']
+        streets = st.session_state['streets']
+        merged = st.session_state['merged']
         st.header('Plot metrics')
         enable = 'computed_metrics' in st.session_state
         data_choice = st.radio('Choose data type:', ('Buildings','Streets'))
         if data_choice == 'Buildings':
-            gdf_to_plot = buildings
+            print(merged.columns)
+            gdf_to_plot = merged
+            metrics_toplot = bldg_metrics_toplot
         elif data_choice == 'Streets':
             gdf_to_plot = streets
+            metrics_toplot = str_metrics_toplot
         else:
             st.error(f'Bad choice')
-    
+        
+        metric_toplot = st.selectbox('Select which metric to plot', metrics_toplot)
+
+        if 'metric_to_plot' in st.session_state and st.session_state['metric_to_plot'] == metric_toplot:
+            fig_toplot = st.session_state['fig_to_plot']
+        else:
+            fig_toplot = plot_metric(buildings, streets, gdf_to_plot, metric_toplot)
+            st.session_state['fig_to_plot'] = fig_toplot
+
+        st.session_state['metric_to_plot'] = metric_toplot
+        st.pyplot(fig_toplot)
+
 ##################################################
 
 # Load your images (you can use file paths, URLs, or use file uploader in Streamlit)
