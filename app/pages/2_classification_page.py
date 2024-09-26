@@ -49,12 +49,18 @@ else:
 # Always provide option to upload a ZIP file
 uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
 
+# Always provide option to upload a ZIP file
+uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
+
+# Always provide option to upload a ZIP file
+uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
+
 if uploaded_zip is not None:
     try:
         # Open the uploaded ZIP file
         with zipfile.ZipFile(uploaded_zip, 'r') as zip_ref:
             # List of expected file names in the zip
-            expected_files = ["merged.csv", "metrics_with_percentiles.csv", "standardized.csv", "buildings.csv"]
+            expected_files = ["merged.gpkg", "metrics_with_percentiles.csv", "standardized.csv", "buildings.gpkg"]
             
             # Check if all expected files are present in the zip
             zip_file_names = zip_ref.namelist()
@@ -63,12 +69,12 @@ if uploaded_zip is not None:
             if missing_files:
                 st.error(f"Missing files in the ZIP: {', '.join(missing_files)}")
             else:
-                # Extract each CSV file and load into DataFrames
-                merged_df = pd.read_csv(zip_ref.open("merged.csv"))
+                # Extract each file and load into DataFrames
+                merged_df = gpd.read_file(zip_ref.open("merged.gpkg"))  # Use GeoPandas for GPKG files
                 metrics_df = pd.read_csv(zip_ref.open("metrics_with_percentiles.csv"))
                 standardized_df = pd.read_csv(zip_ref.open("standardized.csv"))
-                buildings_df = pd.read_csv(zip_ref.open("buildings.csv"))
-                
+                buildings_df = gpd.read_file(zip_ref.open("buildings.gpkg"))  # Use GeoPandas for GPKG files
+
                 # Store in session state for use in the next step
                 st.session_state['merged'] = merged_df
                 st.session_state['metrics_with_percentiles'] = metrics_df
@@ -80,7 +86,6 @@ if uploaded_zip is not None:
                 st.sidebar.write(merged_df.head())  # Preview the merged DataFrame
     except Exception as e:
         st.sidebar.error(f"An error occurred while processing the ZIP file: {e}")
-
 ##############################################################
 
 
