@@ -284,9 +284,9 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
             # Provide download link for the ZIP file
             with open(zip_filename, "rb") as gf:
                 st.download_button(
-                    label="Download gpkg ZIP for classification",
+                    label="Checkpoint for classification",
                     data=gf,
-                    file_name="gpkg_files.zip",
+                    file_name="class_chckpt.zip",
                     mime="application/zip"
                 )
 
