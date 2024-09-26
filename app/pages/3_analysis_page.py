@@ -1,17 +1,6 @@
 import streamlit as st
-import preprocess as pp
-from data_input import load_roads_from_osm, load_gdb_layer
-import metrics
-import merge_dfs as md
-from generate_clusters import add_cluster_col, plot_clusters_st
-from data_output import dataframe_to_gdb
 from stats_generation2 import output_cluster_stats, varify_cleaned_gdf, analyze_gdf
-import matplotlib.pyplot as plt
 import pandas as pd
-import momepy
-import os
-import fiona
-import zipfile
 
 
 # Streamlit App Title
@@ -60,9 +49,8 @@ if st.button("Analyze Data"):
         st.write("Analyzing data...")
 
         # Run the analysis process
-        gdf = urban_types
-        gdf = varify_cleaned_gdf(gdf)  # Ensure it's a cleaned GeoDataFrame
-        analyzed_gdf, results, global_results = analyze_gdf(gdf, "cluster", None)
+        urban_types = varify_cleaned_gdf(urban_types)  # Ensure it's a cleaned GeoDataFrame
+        analyzed_gdf, results, global_results = analyze_gdf(urban_types, "cluster", None)
         
         st.session_state['results'] = results  # Save processed data back to session state
         st.success("Data analysis completed successfully!")

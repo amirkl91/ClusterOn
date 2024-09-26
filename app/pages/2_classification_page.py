@@ -20,6 +20,9 @@ def init_session_state():
         st.session_state['urban_types'] = None
     if 'cluster_fig' not in st.session_state:
         st.session_state['cluster_fig'] = None
+    if 'cluster_merged' not in st.session_state:
+        st.session_state['cluster_merged'] = None
+
 init_session_state()
 ######################### Helper functions #########################
 
@@ -82,8 +85,10 @@ def run_classification(clusters_num):
         standardized = st.session_state['standardized']
         buildings = st.session_state['buildings']
 
-        urban_types = add_cluster_col(merged, buildings, standardized, clusters_num)
+        urban_types, cluster_merged = add_cluster_col(merged, buildings, standardized, clusters_num)
         st.session_state['urban_types'] = urban_types
+        st.session_state['cluster_merged'] = cluster_merged
+
     else:
         st.warning("Please ensure all data is loaded before running classification.")
 
