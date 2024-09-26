@@ -14,6 +14,10 @@ import zipfile
 import tempfile
 import geopandas as gpd
 
+# recommend clusters
+if 'rec_list' not in st.session_state:
+    st.session_state.rec_list = None
+
 @st.cache_data
 def convert_df(_df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -92,8 +96,12 @@ if st.button("Recommend the Number of Clusters"):
         rec_list = best_davies_bouldin_score(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
                      max_clusters=15,
                      n_init=13, random_state=42,repeat=5)
-        st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {rec_list}")
-
+        st.session_state.rec_list = rec_list  # Store result in session state
+        # st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {rec_list}")
+# Display the recommendation if it's already stored
+if st.session_state.rec_list is not None:
+    st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {st.session_state.rec_list}")
+    
 if st.button("Show Recommendation Calculation Plots"):
     if 'standardized' in st.session_state:
         cluster_fig, axes = plot_num_of_clusters(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
@@ -134,33 +142,56 @@ if st.button("Run classification"):
 ##############################################################
 
 
-#TODO: still didnt find a solution for saving gdb as zip:
 ######################### save: #########################
 
-# User inputs for saving paths
-gdb_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/מרקמים/commondata/myproject16.gdb")
-gpkg_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop")
-layer_name = st.text_input("Enter layer name to save the gdb file:", value="clusters")
-
-# Check if data exists in session state before proceeding
 if 'urban_types' in st.session_state:
     urban_types = st.session_state['urban_types']
-    
-    try:
-        # save to CSV
-        csv = convert_df(urban_types)
-        save_csv(csv, file_name='clusters.csv')
-        # save to .gdb
-        if st.button("Download gdb"):
-            dataframe_to_gdb(urban_types, gdb_path, layer_name)
-            st.success(f"Files successfully saved to {gdb_path}")
-        # save to gpkg
-        save_gdf_to_gpkg(urban_types, gpkg_path)
-    except Exception as e:
-        st.error(f"An error occurred while saving: {e}")
-else:
-    urban_types = None
-    st.warning("Please upload files first, then run the preprocess.")
 
+    with tempfile.TemporaryDirectory() as tmpdirname:       
+        try:
+        # Create a temporary directory
+            # Define file paths for each gpkg file
+            urban_types_path = os.path.join(tmpdirname, "urban_types.gpkg")
+            
+            # Convert DataFrames to GPKG and save
+            merged.to_file(urban_types_path, driver='GPKG')
+
+            # Create a ZIP file containing all the CSVs
+            zip_filename = os.path.join(tmpdirname, "gpkg_files.zip")
+            with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                zipf.write(urban_types_path, arcname="urban_types.gpkg")
+            
+            # Provide download link for the ZIP file
+            with open(zip_filename, "rb") as gf:
+                st.download_button(
+                    label="Download GPKG of urban types",
+                    data=gf,
+                    file_name="urban_types.zip",
+                    mime="application/zip"
+                )
+
+            st.success("ZIP file successfully created and ready for download.")
+        except Exception as e:
+            st.error(f"An error occurred while saving the ZIP file: {e}")
+
+        try:
+            # save to shp
+            urban_types_shp_path = os.path.join(tmpdirname, 'urban_types.shp.zip')
+            urban_types.to_file(urban_types_shp_path, driver='ESRI Shapefile')
+            urban_types_zip = os.path.join(tmpdirname, 'urban_types.zip')
+            with zipfile.ZipFile(urban_types_zip, 'w') as mzip:
+                mzip.write(urban_types_shp_path, 'urban_types.shp.zip')
+            with open(urban_types_zip, 'rb') as mzf:
+                st.download_button(
+                    label='Download urban types data as .shp',
+                    data = mzf,
+                    file_name='urban_types_shp.zip',
+                    mime='application/zip'
+                )
+        except Exception as e:
+            st.error(f"An error occurred while saving: {e}")
+else:
+    merged = None
+    st.warning("Please upload files first, then run the preprocess.")
 
 ##################################################
