@@ -15,6 +15,7 @@ from kneed import KneeLocator
 from sklearn.cluster import KMeans
 import geopandas as gpd
 from collections import Counter
+import contextily as ctx
 
 
 def _elbow(gdf, K: range):
@@ -183,6 +184,7 @@ def plot_clusters_st(buildings):
     categories = buildings['cluster'].unique()
     legend_handles = [mpatches.Patch(color=colors[i % len(colors)], label=f'Cluster {category}') 
                       for i, category in enumerate(categories)]
+    ctx.add_basemap(ax, crs=buildings.crs, source=ctx.providers.CartoDB.Positron)
 
     # Add the custom legend
     ax.legend(handles=legend_handles, title='Cluster', bbox_to_anchor=(1, 1), loc='upper left')
