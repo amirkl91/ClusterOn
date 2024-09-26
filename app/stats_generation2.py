@@ -400,6 +400,9 @@ def supervised_leading_metrics(gdf, classification_column):
 
     # Standardize the features
     scaler = StandardScaler()
+    print("color" in features)
+    print("gdf head", gdf.head())  # Check for unexpected data structures
+    print("gdf types", gdf.dtypes)  # Ensure data types are consistent
     scaled_features = scaler.fit_transform(features)
 
     # Train a Random Forest model on the whole data
@@ -502,12 +505,21 @@ def output_cluster_stats(cluster_label, results):
 
 def varify_cleaned_gdf(gdf):
     threshold = len(gdf) * 0.5
-    gdf = gdf.dropna(axis=1, thresh=threshold)
-    gdf.fillna(0, inplace=True)
-    gdf.drop(
-        columns=["street_index", "junction_index"],
-        inplace=True,
-    )
+    gdf = gdf.dropna(axis=1, thresh=threshold)  # Drop columns with too many NaNs
+    gdf.fillna(0, inplace=True)  # Fill remaining NaNs with 0
+
+    # Drop unwanted columns
+    gdf.drop(columns=["street_index", "junction_index"], inplace=True, errors="ignore")
+
+    # Keep only columns that are numeric (int, float) or the 'geometry' column
+    numeric_columns = gdf.select_dtypes(
+        include=["int32", "int64", "float32", "float64"]
+    ).columns
+    columns_to_keep = list(numeric_columns) + ["geometry"]  # Add 'geometry' explicitly
+
+    # Filter the DataFrame to keep only the relevant columns
+    gdf = gdf[columns_to_keep]
+
     return gdf
 
 
