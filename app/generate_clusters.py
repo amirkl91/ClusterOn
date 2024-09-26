@@ -168,22 +168,28 @@ def plot_clusters_st(buildings):
     st.write("Plotting ...")
 
     # Create a figure and axis with a geographic projection
-    fig, ax = plt.subplots(figsize=(12, 12))
+    fig, ax = plt.subplots(figsize=(8, 8))
 
     # Define colors for clusters
     colors = plt.get_cmap('tab20').colors
 
-    # Plot buildings colored by cluster
-    buildings.plot(column='cluster', cmap='Set1', legend=False, ax=ax)  # Add edgecolor for better visibility
+    # Create a color mapping for clusters
+    unique_clusters = sorted(buildings['cluster'].unique())
+    color_map = {cluster: colors[i % len(colors)] for i, cluster in enumerate(unique_clusters)}
+
+    # Map colors to the 'cluster' column in buildings
+    buildings['color'] = buildings['cluster'].map(color_map)
+    # Plot buildings colored by the custom color column
+    buildings.plot(color=buildings['color'], legend=False, ax=ax)
 
     # Add title and customize plot
     ax.set_title('Urban Types by Cluster', fontsize=16)
     ax.set_axis_off()  # Optionally remove axis lines for a cleaner look
 
     # Create legend handles
-    categories = buildings['cluster'].unique()
-    legend_handles = [mpatches.Patch(color=colors[i % len(colors)], label=f'Cluster {category}') 
-                      for i, category in enumerate(categories)]
+    legend_handles = [mpatches.Patch(color=color_map[cluster], label=f'Cluster {cluster}') 
+                      for cluster in unique_clusters]
+
     ctx.add_basemap(ax, crs=buildings.crs, source=ctx.providers.CartoDB.Positron)
 
     # Add the custom legend

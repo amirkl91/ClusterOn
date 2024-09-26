@@ -3,7 +3,7 @@ import preprocess as pp
 from data_input import load_roads_from_osm, load_gdb_layer, load_buildings_from_osm
 import metrics
 import merge_dfs as md
-from data_output import dataframe_to_gdb, save_csv
+from data_output import dataframe_to_gdb, save_csv, save_gdf_to_gpkg
 import matplotlib.pyplot as plt
 import pandas as pd
 import momepy
@@ -63,8 +63,9 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, h
     st.session_state['merged'] = merged
     st.session_state['metrics_with_percentiles'] = metrics_with_percentiles
     st.session_state['standardized'] = standardized
+    st.session_state['streets'] = streets
 
-    return merged, metrics_with_percentiles, standardized, buildings
+    return merged, metrics_with_percentiles, standardized, buildings, streets
 
 def load_gdb_data(data_source_key, data_type):
     st.sidebar.header(f"Upload {data_type} Data")
@@ -244,7 +245,7 @@ if st.button("Run preprocessing and generate metrics"):
     elif buildings_gdf is None:
         session_string = 'buildings_data'
     place, local_crs, network_type = return_osm_params(session_string)
-    merged, metrics_with_percentiles, standardized, buildings = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)       
+    merged, metrics_with_percentiles, standardized, buildings, streets = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)       
     st.success("Preprocessing completed!")
 
 ##################################################
@@ -252,81 +253,71 @@ if st.button("Run preprocessing and generate metrics"):
 #TODO: still didnt find a solution for saving gdb as zip:
 ######################### save: #########################
 
-# User inputs for saving paths
-gdb_path = st.text_input("Enter the path to save the gdb file:", value="/Users/annarubtsov/Desktop/DSSG/Michaels_Data/All_Layers/קונטור בניינים/commondata/jps_reka.gdb")
-layer_name = st.text_input("Enter layer name to save the gdb file:", value="all_metrics")
-
 # Check if data exists in session state before proceeding
 if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_state and 'standardized' in st.session_state and 'buildings' in st.session_state:
     merged = st.session_state['merged']
     metrics_with_percentiles = st.session_state['metrics_with_percentiles']
     standardized = st.session_state['standardized']
     buildings = st.session_state['buildings']
-    
-    try:
+    streets = st.session_state['streets']
+
+    with tempfile.TemporaryDirectory() as tmpdirname:       
+        try:
         # Create a temporary directory
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            # Define file paths for each CSV file
-            merged_csv_path = os.path.join(tmpdirname, "merged.csv")
-            metrics_csv_path = os.path.join(tmpdirname, "metrics_with_percentiles.csv")
+            # Define file paths for each gpkg file
+            merged_gpkg_path = os.path.join(tmpdirname, "merged.gpkg")
             standardized_csv_path = os.path.join(tmpdirname, "standardized.csv")
-            buildings_csv_path = os.path.join(tmpdirname, "buildings.csv")
+            buildings_gpkg_path = os.path.join(tmpdirname, "buildings.gpkg")
             
             # Convert DataFrames to CSV and save them
-            merged.to_csv(merged_csv_path, index=False)
-            metrics_with_percentiles.to_csv(metrics_csv_path, index=False)
+            merged.to_file(merged_gpkg_path, driver='GPKG')
             standardized.to_csv(standardized_csv_path, index=False)
-            buildings.to_csv(buildings_csv_path, index=False)
-            
+            buildings.to_file(buildings_gpkg_path, driver='GPKG')
+
             # Create a ZIP file containing all the CSVs
-            zip_filename = os.path.join(tmpdirname, "data_files.zip")
+            zip_filename = os.path.join(tmpdirname, "gpkg_files.zip")
             with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                zipf.write(merged_csv_path, arcname="merged.csv")
-                zipf.write(metrics_csv_path, arcname="metrics_with_percentiles.csv")
+                zipf.write(merged_gpkg_path, arcname="merged.gpkg")
                 zipf.write(standardized_csv_path, arcname="standardized.csv")
-                zipf.write(buildings_csv_path, arcname="buildings.csv")
+                zipf.write(buildings_gpkg_path, arcname="buildings.gpkg")
             
             # Provide download link for the ZIP file
-            with open(zip_filename, "rb") as f:
+            with open(zip_filename, "rb") as gf:
                 st.download_button(
-                    label="Download All as ZIP for classification step",
-                    data=f,
-                    file_name="data_files.zip",
+                    label="Checkpoint for classification",
+                    data=gf,
+                    file_name="class_chckpt.zip",
                     mime="application/zip"
                 )
-                
-        st.success("ZIP file successfully created and ready for download.")
-    except Exception as e:
-        st.error(f"An error occurred while saving the ZIP file: {e}")
-    
-    try:
-        # save to CSV
-        csv = convert_df(merged)
-        save_csv(csv, file_name='buildings.csv')
-        # save to gdb
-        if st.button("Download gdb"):
-            dataframe_to_gdb(merged, gdb_path, layer_name)
-            st.success(f"Files successfully saved to {gdb_path}")
-    except Exception as e:
-        st.error(f"An error occurred while saving: {e}")
+
+            st.success("ZIP file successfully created and ready for download.")
+        except Exception as e:
+            st.error(f"An error occurred while saving the ZIP file: {e}")
+
+        try:
+            # save to shp
+            bldg_shp_path = os.path.join(tmpdirname, 'buildings.shp.zip')
+            str_shp_path = os.path.join(tmpdirname, 'streets.shp.zip')
+            buildings.to_file(bldg_shp_path, driver='ESRI Shapefile')
+            streets.to_file(str_shp_path, driver='ESRI Shapefile')
+            metrics_zip = os.path.join(tmpdirname, 'metrics.zip')
+            with zipfile.ZipFile(metrics_zip, 'w') as mzip:
+                mzip.write(bldg_shp_path, 'buildings.shp.zip')
+                mzip.write(str_shp_path, 'streets.shp.zip')
+            with open(metrics_zip, 'rb') as mzf:
+                st.download_button(
+                    label='Download data as .shp',
+                    data = mzf,
+                    file_name='metrics.zip',
+                    mime='application/zip'
+                )
+        except Exception as e:
+            st.error(f"An error occurred while saving: {e}")
 
 else:
     merged = None
     st.warning("Please upload files first, then run the preprocess.")
 
-# if merged is not None:
-#     st.write(merged.head())
-#     try:
-#         # Save to CSV
-#         csv = convert_df(merged)
-#         save_csv(csv)
-#         if st.button("Download gdb"):
-#             dataframe_to_gdb(merged, gdb_path, layer_name)
-#             st.success(f"Files successfully saved to {gdb_path}")
-#     except Exception as e:
-#         st.error(f"An error occurred while saving: {e}")
-# else:
-#     st.warning("Please run the preprocess first.")
 
 
 ##################################################
