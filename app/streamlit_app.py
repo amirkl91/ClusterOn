@@ -3,7 +3,7 @@ import preprocess as pp
 from data_input import load_roads_from_osm, load_gdb_layer, load_buildings_from_osm
 import metrics
 import merge_dfs as md
-from data_output import dataframe_to_gdb, save_csv, save_gdf_to_gpkg
+# from data_output import dataframe_to_gdb, save_csv, save_gdf_to_gpkg
 import matplotlib.pyplot as plt
 import pandas as pd
 import momepy
@@ -97,7 +97,9 @@ def load_gdb_data(data_source_key, data_type):
 
 def load_osm_data(data_source_key, data_type, is_streets):
     st.sidebar.header(f"Enter {data_type} Data from OSM")
-    place = st.sidebar.text_input(f"Enter a city name for OSM {data_type} data", value="Jerusalem", key=f"{data_source_key}_place")
+    default_place = st.session_state['place'] if 'place' in st.session_state else 'Jerusalem'
+    place = st.sidebar.text_input(f"Enter a city name for OSM {data_type} data", value=default_place, key=f"{data_source_key}_place")
+    st.session_state['place'] = place
     local_crs = st.sidebar.text_input(f"Enter Local CRS (e.g., EPSG:2039)", value="EPSG:2039", key=f"{data_source_key}_crs")
     # Add a hyperlink
     st.sidebar.markdown("[Don't know your CRS?](https://epsg.io/#google_vignette)", unsafe_allow_html=True)
@@ -107,9 +109,45 @@ def load_osm_data(data_source_key, data_type, is_streets):
         network_type = None
     if st.sidebar.button(f"Load OSM {data_type} Data", key=f"{data_source_key}_osm_load"):
         st.sidebar.write(f"OSM data fetched")
+        if 'zip_filename' in st.session_state:
+            del st.session_state['zip_filename']
+        if 'metrics_zip' in st.session_state:
+            del st.session_state['metrics_zip']
         # Here you would load the OSM data
 
     return place, local_crs, network_type
+
+def zip_checkpoint(tempdir, _merged, standardized, _buildings):
+    # Define file paths for each gpkg file
+    merged_gpkg_path = os.path.join(tempdir, "merged.gpkg")
+    standardized_csv_path = os.path.join(tempdir, "standardized.csv")
+    buildings_gpkg_path = os.path.join(tempdir, "buildings.gpkg")
+    
+    # Convert DataFrames to CSV and save them
+    _merged.to_file(merged_gpkg_path, driver='GPKG')
+    standardized.to_csv(standardized_csv_path, index=False)
+    _buildings.to_file(buildings_gpkg_path, driver='GPKG')
+
+    # Create a ZIP file containing all the CSVs
+    zip_filename = os.path.join(tempdir, "gpkg_files.zip")
+    with zipfile.ZipFile(zip_filename, 'w') as zipf:
+        zipf.write(merged_gpkg_path, arcname="merged.gpkg")
+        zipf.write(standardized_csv_path, arcname="standardized.csv")
+        zipf.write(buildings_gpkg_path, arcname="buildings.gpkg")
+    st.session_state['zip_filename'] = zip_filename
+    return zip_filename
+
+def zip_data(tempdir, _streets, _buildings):
+    bldg_shp_path = os.path.join(tempdir, 'buildings.shp.zip')
+    str_shp_path = os.path.join(tempdir, 'streets.shp.zip')
+    _buildings.to_file(bldg_shp_path, driver='ESRI Shapefile')
+    _streets.to_file(str_shp_path, driver='ESRI Shapefile')
+    metrics_zip = os.path.join(tempdir, 'metrics.zip')
+    with zipfile.ZipFile(metrics_zip, 'w') as mzip:
+        mzip.write(bldg_shp_path, 'buildings.shp.zip')
+        mzip.write(str_shp_path, 'streets.shp.zip')
+    st.session_state['metrics_zip'] = metrics_zip
+    return metrics_zip
 
 # List of metrics
 metrics_list = [
@@ -188,138 +226,132 @@ st.markdown("""
     3. You will be able to download the processed data.
     """)
 
-# Use an expander for the metrics selection
-with st.expander("Select Metrics for Analysis ✔️", expanded=False):
-    # Create columns to display checkboxes in rows
-    num_columns = 5  # Adjust the number of columns as needed
-    columns = st.columns(num_columns)
+datacol, plotcol = st.columns(2)
 
-    # Iterate over metrics and display them in columns
-    for i, metric in enumerate(metrics_list):
-        col_index = i % num_columns  # Determine the column index
-        with columns[col_index]:
-            is_selected = st.checkbox(f"{metric.capitalize()}", value=True)
-            
-            # Save the user's choice (True/False) in the dictionary
-            user_selections[metric] = is_selected
+### Data side of app
+with datacol:
+    # Use an expander for the metrics selection
+    with st.expander("Select Metrics for Analysis ✔️", expanded=False):
+        # Create columns to display checkboxes in rows
+        num_columns = 3  # Adjust the number of columns as needed
+        columns = st.columns(num_columns)
 
-st.sidebar.markdown("# Preprocess 🧹 & Metrics generation 📐")
+        # Iterate over metrics and display them in columns
+        for i, metric in enumerate(metrics_list):
+            col_index = i % num_columns  # Determine the column index
+            with columns[col_index]:
+                is_selected = st.checkbox(f"{metric.capitalize()}", value=True)
+                
+                # Save the user's choice (True/False) in the dictionary
+                user_selections[metric] = is_selected
 
-######################### upload: #########################
+    st.sidebar.markdown("# Preprocess 🧹 & Metrics generation 📐")
 
-# Select buildings data source
-st.sidebar.header("Choose Buildings Data Source")
-bld_data_source = st.sidebar.radio("Select buildings data source:", ("Upload buildings GDB file", "Use buildings OSM data"))
+    ######################### upload: #########################
 
-if bld_data_source == "Upload buildings GDB file":
-    load_gdb_data("buildings", "buildings")
-    height_column_name = st.sidebar.text_input("Enter the name of the **height** column:", value=None)
-    st.session_state['height_column_name'] = height_column_name
-elif bld_data_source == "Use buildings OSM data":
-    place, local_crs, network_type = load_osm_data("buildings", "buildings", False)
-    st.session_state['buildings_data'] = (place, local_crs, network_type)
+    # Select buildings data source
+    st.sidebar.header("Choose Buildings Data Source")
+    bld_data_source = st.sidebar.radio("Select buildings data source:", ("Upload buildings GDB file", "Use buildings OSM data"))
 
-# Select streets data source
-st.sidebar.header("Choose Streets Data Source")
-str_data_source = st.sidebar.radio("Select streets data source:", ("Upload streets GDB file", "Use streets OSM data"))
+    if bld_data_source == "Upload buildings GDB file":
+        load_gdb_data("buildings", "buildings")
+        height_column_name = st.sidebar.text_input("Enter the name of the **height** column:", value=None)
+        st.session_state['height_column_name'] = height_column_name
+    elif bld_data_source == "Use buildings OSM data":
+        place, local_crs, network_type = load_osm_data("buildings", "buildings", False)
+        st.session_state['buildings_data'] = (place, local_crs, network_type)
 
-if str_data_source == "Upload streets GDB file":
-    load_gdb_data("streets", "streets")
-elif str_data_source == "Use streets OSM data":
-    place, local_crs, network_type = load_osm_data("streets", "streets", True)
-    st.session_state['streets_data'] = (place, local_crs, network_type)
+    # Select streets data source
+    st.sidebar.header("Choose Streets Data Source")
+    str_data_source = st.sidebar.radio("Select streets data source:", ("Upload streets GDB file", "Use streets OSM data"))
 
-##################################################
+    if str_data_source == "Upload streets GDB file":
+        load_gdb_data("streets", "streets")
+    elif str_data_source == "Use streets OSM data":
+        place, local_crs, network_type = load_osm_data("streets", "streets", True)
+        st.session_state['streets_data'] = (place, local_crs, network_type)
 
-
-######################### pre-process: #########################
-
-# 3. Button to Run the Processing Functionality
-if st.button("Run preprocessing and generate metrics"):
-    # TODO: use the user_selections dictionary before preprocessing
-    buildings_gdf = st.session_state.get('buildings_gdf')
-    streets_gdf = st.session_state.get('streets_gdf')
-    height_column_name = st.session_state.get('height_column_name')
-    if streets_gdf is None:
-        session_string = 'streets_data'
-    elif buildings_gdf is None:
-        session_string = 'buildings_data'
-    place, local_crs, network_type = return_osm_params(session_string)
-    merged, metrics_with_percentiles, standardized, buildings, streets = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)       
-    st.success("Preprocessing completed!")
-
-##################################################
-
-#TODO: still didnt find a solution for saving gdb as zip:
-######################### save: #########################
-
-# Check if data exists in session state before proceeding
-if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_state and 'standardized' in st.session_state and 'buildings' in st.session_state:
-    merged = st.session_state['merged']
-    metrics_with_percentiles = st.session_state['metrics_with_percentiles']
-    standardized = st.session_state['standardized']
-    buildings = st.session_state['buildings']
-    streets = st.session_state['streets']
-
-    with tempfile.TemporaryDirectory() as tmpdirname:       
-        try:
-        # Create a temporary directory
-            # Define file paths for each gpkg file
-            merged_gpkg_path = os.path.join(tmpdirname, "merged.gpkg")
-            standardized_csv_path = os.path.join(tmpdirname, "standardized.csv")
-            buildings_gpkg_path = os.path.join(tmpdirname, "buildings.gpkg")
-            
-            # Convert DataFrames to CSV and save them
-            merged.to_file(merged_gpkg_path, driver='GPKG')
-            standardized.to_csv(standardized_csv_path, index=False)
-            buildings.to_file(buildings_gpkg_path, driver='GPKG')
-
-            # Create a ZIP file containing all the CSVs
-            zip_filename = os.path.join(tmpdirname, "gpkg_files.zip")
-            with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                zipf.write(merged_gpkg_path, arcname="merged.gpkg")
-                zipf.write(standardized_csv_path, arcname="standardized.csv")
-                zipf.write(buildings_gpkg_path, arcname="buildings.gpkg")
-            
-            # Provide download link for the ZIP file
-            with open(zip_filename, "rb") as gf:
-                st.download_button(
-                    label="Checkpoint for classification",
-                    data=gf,
-                    file_name="class_chckpt.zip",
-                    mime="application/zip"
-                )
-
-            st.success("ZIP file successfully created and ready for download.")
-        except Exception as e:
-            st.error(f"An error occurred while saving the ZIP file: {e}")
-
-        try:
-            # save to shp
-            bldg_shp_path = os.path.join(tmpdirname, 'buildings.shp.zip')
-            str_shp_path = os.path.join(tmpdirname, 'streets.shp.zip')
-            buildings.to_file(bldg_shp_path, driver='ESRI Shapefile')
-            streets.to_file(str_shp_path, driver='ESRI Shapefile')
-            metrics_zip = os.path.join(tmpdirname, 'metrics.zip')
-            with zipfile.ZipFile(metrics_zip, 'w') as mzip:
-                mzip.write(bldg_shp_path, 'buildings.shp.zip')
-                mzip.write(str_shp_path, 'streets.shp.zip')
-            with open(metrics_zip, 'rb') as mzf:
-                st.download_button(
-                    label='Download data as .shp',
-                    data = mzf,
-                    file_name='metrics.zip',
-                    mime='application/zip'
-                )
-        except Exception as e:
-            st.error(f"An error occurred while saving: {e}")
-
-else:
-    merged = None
-    st.warning("Please upload files first, then run the preprocess.")
+    ##################################################
 
 
+    ######################### pre-process: #########################
 
+    # 3. Button to Run the Processing Functionality
+    if st.button("Run preprocessing and generate metrics"):
+        # TODO: use the user_selections dictionary before preprocessing
+        buildings_gdf = st.session_state.get('buildings_gdf')
+        streets_gdf = st.session_state.get('streets_gdf')
+        height_column_name = st.session_state.get('height_column_name')
+        if streets_gdf is None:
+            session_string = 'streets_data'
+        elif buildings_gdf is None:
+            session_string = 'buildings_data'
+        place, local_crs, network_type = return_osm_params(session_string)
+        merged, metrics_with_percentiles, standardized, buildings, streets = process_data(place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)       
+        st.success("Preprocessing completed!")
+        st.session_state['computed_metrics'] = True
+
+    ##################################################
+
+    ######################### save: #########################
+
+    # Check if data exists in session state before proceeding
+    if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_state and 'standardized' in st.session_state and 'buildings' in st.session_state:
+        merged = st.session_state['merged']
+        metrics_with_percentiles = st.session_state['metrics_with_percentiles']
+        standardized = st.session_state['standardized']
+        buildings = st.session_state['buildings']
+        streets = st.session_state['streets']
+        
+        save_files = st.checkbox('Prepare files for saving?')
+        
+        if save_files:
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                try:
+                    zip_filename = zip_checkpoint(tmpdirname, merged, standardized, buildings)
+                    
+                    # Provide download link for the ZIP file
+                    with open(zip_filename, "rb") as gf:
+                        st.download_button(
+                            label="Download zip for classification",
+                            data=gf,
+                            file_name="class_chckpt.zip",
+                            mime="application/zip"
+                        )
+
+                    st.success("ZIP file successfully created and ready for download.")
+                except Exception as e:
+                    st.error(f"An error occurred while saving the ZIP file: {e}")
+
+                try:
+                    # save to shp
+                    metrics_zip = zip_data(tmpdirname, streets, buildings)
+                    with open(metrics_zip, 'rb') as mzf:
+                        st.download_button(
+                            label='Download data as .shp',
+                            data = mzf,
+                            file_name='metrics.zip',
+                            mime='application/zip'
+                        )
+                except Exception as e:
+                    st.error(f"An error occurred while saving: {e}")
+
+    else:
+        merged = None
+        st.warning("Please upload files first, then run the preprocess.")
+### Plots side of app
+with plotcol:
+    if 'computed_metrics' in st.session_state:
+        st.header('Plot metrics')
+        enable = 'computed_metrics' in st.session_state
+        data_choice = st.radio('Choose data type:', ('Buildings','Streets'))
+        if data_choice == 'Buildings':
+            gdf_to_plot = buildings
+        elif data_choice == 'Streets':
+            gdf_to_plot = streets
+        else:
+            st.error(f'Bad choice')
+    
 ##################################################
 
 # Load your images (you can use file paths, URLs, or use file uploader in Streamlit)
@@ -332,7 +364,7 @@ col1, col2, col3 = st.columns(3)
 # Display each image in its respective column
 with col1:
     st.image(image_1, use_column_width=True)
-with col2:
-    st.image(image_2, use_column_width=True)
 with col3:
-    st.image(image_3, use_column_width=True)
+    st.image(image_2, use_column_width=True)
+# with col3:
+#     st.image(image_3, use_column_width=True)
