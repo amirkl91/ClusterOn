@@ -3,7 +3,7 @@ import preprocess as pp
 from data_input import load_roads_from_osm, load_gdb_layer, load_buildings_from_osm
 import metrics
 import merge_dfs as md
-from data_output import dataframe_to_gdb, save_csv
+from data_output import dataframe_to_gdb, save_csv, save_gdf_to_gpkg
 import matplotlib.pyplot as plt
 import pandas as pd
 import momepy
@@ -262,47 +262,44 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
     metrics_with_percentiles = st.session_state['metrics_with_percentiles']
     standardized = st.session_state['standardized']
     buildings = st.session_state['buildings']
-    
+
     try:
         # Create a temporary directory
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            # Define file paths for each CSV file
-            merged_csv_path = os.path.join(tmpdirname, "merged.csv")
+        with tempfile.TemporaryDirectory() as tmpdirname:       
+            # Define file paths for each gpkg file
+            merged_gpkg_path = os.path.join(tmpdirname, "merged.gpkg")
             metrics_csv_path = os.path.join(tmpdirname, "metrics_with_percentiles.csv")
             standardized_csv_path = os.path.join(tmpdirname, "standardized.csv")
-            buildings_csv_path = os.path.join(tmpdirname, "buildings.csv")
+            buildings_gpkg_path = os.path.join(tmpdirname, "buildings.gpkg")
             
             # Convert DataFrames to CSV and save them
-            merged.to_csv(merged_csv_path, index=False)
+            merged.to_file(merged_gpkg_path, driver='GPKG')
             metrics_with_percentiles.to_csv(metrics_csv_path, index=False)
             standardized.to_csv(standardized_csv_path, index=False)
-            buildings.to_csv(buildings_csv_path, index=False)
-            
+            buildings.to_file(buildings_gpkg_path, driver='GPKG')
+
             # Create a ZIP file containing all the CSVs
-            zip_filename = os.path.join(tmpdirname, "data_files.zip")
-            with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                zipf.write(merged_csv_path, arcname="merged.csv")
+            gzip_filename = os.path.join(tmpdirname, "gpkg_files.zip")
+            with zipfile.ZipFile(gzip_filename, 'w') as zipf:
+                zipf.write(merged_gpkg_path, arcname="merged.gpkg")
                 zipf.write(metrics_csv_path, arcname="metrics_with_percentiles.csv")
                 zipf.write(standardized_csv_path, arcname="standardized.csv")
-                zipf.write(buildings_csv_path, arcname="buildings.csv")
+                zipf.write(buildings_gpkg_path, arcname="buildings.gpkg")
             
             # Provide download link for the ZIP file
-            with open(zip_filename, "rb") as f:
+            with open(gzip_filename, "rb") as gf:
                 st.download_button(
-                    label="Download All as ZIP for classification step",
-                    data=f,
-                    file_name="data_files.zip",
+                    label="Download gpkg ZIP for classification",
+                    data=gf,
+                    file_name="gpkg_files.zip",
                     mime="application/zip"
                 )
-                
+
         st.success("ZIP file successfully created and ready for download.")
     except Exception as e:
         st.error(f"An error occurred while saving the ZIP file: {e}")
-    
+
     try:
-        # save to CSV
-        csv = convert_df(merged)
-        save_csv(csv, file_name='buildings.csv')
         # save to gdb
         if st.button("Download gdb"):
             dataframe_to_gdb(merged, gdb_path, layer_name)
@@ -314,19 +311,6 @@ else:
     merged = None
     st.warning("Please upload files first, then run the preprocess.")
 
-# if merged is not None:
-#     st.write(merged.head())
-#     try:
-#         # Save to CSV
-#         csv = convert_df(merged)
-#         save_csv(csv)
-#         if st.button("Download gdb"):
-#             dataframe_to_gdb(merged, gdb_path, layer_name)
-#             st.success(f"Files successfully saved to {gdb_path}")
-#     except Exception as e:
-#         st.error(f"An error occurred while saving: {e}")
-# else:
-#     st.warning("Please run the preprocess first.")
 
 
 ##################################################
