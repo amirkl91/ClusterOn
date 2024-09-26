@@ -14,6 +14,10 @@ import zipfile
 import tempfile
 import geopandas as gpd
 
+# recommend clusters
+if 'rec_list' not in st.session_state:
+    st.session_state.rec_list = None
+
 @st.cache_data
 def convert_df(_df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -92,8 +96,12 @@ if st.button("Recommend the Number of Clusters"):
         rec_list = best_davies_bouldin_score(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
                      max_clusters=15,
                      n_init=13, random_state=42,repeat=5)
-        st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {rec_list}")
-
+        st.session_state.rec_list = rec_list  # Store result in session state
+        # st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {rec_list}")
+# Display the recommendation if it's already stored
+if st.session_state.rec_list is not None:
+    st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {st.session_state.rec_list}")
+    
 if st.button("Show Recommendation Calculation Plots"):
     if 'standardized' in st.session_state:
         cluster_fig, axes = plot_num_of_clusters(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
