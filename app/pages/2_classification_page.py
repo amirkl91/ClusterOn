@@ -87,19 +87,23 @@ if uploaded_zip is not None:
 ######################### clusters: #########################
 
 # recommend clusters
-if st.button("Recommend number of clusters"):
+if st.button("Recommend the Number of Clusters"):
     if 'standardized' in st.session_state:
         rec_list = best_davies_bouldin_score(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
                      max_clusters=15,
                      n_init=13, random_state=42,repeat=5)
-        st.write(f"The number of clusters we recommend is one of {rec_list}")
+        st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {rec_list}")
+
+if st.button("Show Recommendation Calculation Plots"):
+    if 'standardized' in st.session_state:
         cluster_fig, axes = plot_num_of_clusters(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
-                                max_clusters=15,
-                                n_init=13, random_state=42)
+                                        max_clusters=15,
+                                        n_init=13, random_state=42)
         # Show plot in Streamlit
         st.pyplot(cluster_fig)
-
-clusters_num = st.selectbox("Select number of clusters:", options=range(2, 21), index=5)
+        
+# Input number of clusters from an unrestricted text box
+clusters_num = st.text_input("Enter the number of clusters:")
 # Run classification button
 if st.button("Run classification"):
     # Ensure all necessary data is available
