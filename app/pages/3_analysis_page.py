@@ -13,6 +13,7 @@ import os
 import fiona
 import zipfile
 
+
 # Streamlit App Title
 st.title("Morphological Analysis Tool 🌍📌📏")
 st.sidebar.markdown("# Analysis of city textures 📊")
@@ -63,39 +64,28 @@ if st.button("Analyze Data"):
         gdf = varify_cleaned_gdf(gdf)  # Ensure it's a cleaned GeoDataFrame
         analyzed_gdf, results, global_results = analyze_gdf(gdf, "cluster", None)
         
-        st.session_state['analyzed_gdf'] = analyzed_gdf  # Save processed data back to session state
+        st.session_state['results'] = results  # Save processed data back to session state
         st.success("Data analysis completed successfully!")
     else:
         st.warning("Please upload data before analyzing.")
    
-analyzed_gdf = st.session_state.get('analyzed_gdf')
+results = st.session_state.get('results')
 # Make sure the file is uploaded and the cluster column exists
-if analyzed_gdf is not None and cluster_column_name is not None:
+if results is not None and cluster_column_name is not None:
     
     # Display the available clusters in the dataset
-    unique_clusters = urban_types[cluster_column_name].unique()
+    unique_clusters = results.keys()
     
     st.subheader("Cluster Selection and Analysis")
-    selected_clusters = st.multiselect("Select clusters to analyze:", options=unique_clusters, default=[unique_clusters[0]])
+    selected_cluster = st.selectbox("Select a cluster to analyze:", options=unique_clusters)
 
-    if selected_clusters:
-        for cluster_label in selected_clusters:
-            st.write(f"**Cluster: {cluster_label}**")
-            
-            # Filter the data for the selected cluster
-            cluster_data = analyzed_gdf[analyzed_gdf[cluster_column_name] == cluster_label]
-            
-            # Display cluster statistics (you can customize this function further)
-            stats_df = output_cluster_stats(cluster_label, cluster_data)
-            
-            # Display some summary statistics (customize as needed)
-            st.write(stats_df.describe())
-            
-            # Plot or visualize data (optional)
-            st.write(f"Visualization for Cluster {cluster_label}:")
-            st.bar_chart(stats_df)  # Example chart, change as needed
-    else:
-        st.warning("Please select at least one cluster to analyze.")
+    if selected_cluster:
+        st.write(f"**Cluster: {selected_cluster}**")
+        # Display cluster statistics (you can customize this function further)
+        stats_df = output_cluster_stats(selected_cluster, results)
+        # Display some summary statistics (customize as needed)
+        st.write(stats_df)
+        
 else:
     st.warning("Please upload the data and ensure the cluster column exists.")
 

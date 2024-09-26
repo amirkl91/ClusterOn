@@ -20,8 +20,16 @@ def convert_df(_df):
 
 # Streamlit App Title
 st.title("Morphological Analysis Tool 🌍📌📏")
-st.sidebar.markdown("# Classification of city textures 🗺️")
-
+st.markdown("# Part 2: Classification of City Textures 🗺️")
+# Description paragraph
+st.markdown("""
+    ## How to Classify City Textures:
+    1. After completing Part 1 (Data Preprocessing), you have two options to proceed:
+        - Directly move on to Part 2, as the processed data is already saved.
+        - Alternatively, upload the ZIP file generated in Part 1.
+    2. (Optional) You can request a recommendation for the optimal number of clusters to divide the city.
+    3. Run the classification to visualize the results and download the output.
+    """)
 ######################### upload: #########################
 
 # Sidebar for uploading files
@@ -39,7 +47,7 @@ else:
     st.sidebar.warning("Preprocessed data not found. Please upload a ZIP file.")
 
 # Always provide option to upload a ZIP file
-uploaded_zip = st.sidebar.file_uploader("Upload the ZIP file from part 1", type=["zip"])
+uploaded_zip = st.sidebar.file_uploader("Upload ZIP file from Part 1 (Data Preprocessing)", type=["zip"])
 
 if uploaded_zip is not None:
     try:
@@ -79,19 +87,23 @@ if uploaded_zip is not None:
 ######################### clusters: #########################
 
 # recommend clusters
-if st.button("Recommend number of clusters"):
+if st.button("Recommend the Number of Clusters"):
     if 'standardized' in st.session_state:
         rec_list = best_davies_bouldin_score(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
                      max_clusters=15,
                      n_init=13, random_state=42,repeat=5)
-        st.write(f"The number of clusters we recommend is one of {rec_list}")
+        st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {rec_list}")
+
+if st.button("Show Recommendation Calculation Plots"):
+    if 'standardized' in st.session_state:
         cluster_fig, axes = plot_num_of_clusters(st.session_state.get('standardized'), model='kmeans', standardize=False, min_clusters=1,
-                                max_clusters=15,
-                                n_init=13, random_state=42)
+                                        max_clusters=15,
+                                        n_init=13, random_state=42)
         # Show plot in Streamlit
         st.pyplot(cluster_fig)
-
-clusters_num = st.selectbox("Select number of clusters:", options=range(2, 21), index=5)
+        
+# Input number of clusters from an unrestricted text box
+clusters_num = st.text_input("Enter the number of clusters:")
 # Run classification button
 if st.button("Run classification"):
     # Ensure all necessary data is available
@@ -133,9 +145,7 @@ if 'urban_types' in st.session_state:
             dataframe_to_gdb(urban_types, gdb_path, layer_name)
             st.success(f"Files successfully saved to {gdb_path}")
         # save to gpkg
-        st.write('before o')
         save_gdf_to_gpkg(urban_types, gpkg_path)
-        st.write('after o')
     except Exception as e:
         st.error(f"An error occurred while saving: {e}")
 else:
