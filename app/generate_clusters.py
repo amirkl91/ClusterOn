@@ -136,7 +136,7 @@ def add_cluster_col(merged, buildings, standardized, clusters_num):
     cgram.fit(standardized.fillna(0))
     merged["cluster"] = cgram.labels[clusters_num].values
     buildings["cluster"] = merged["cluster"]
-    return buildings #,merged #TODO: save merged and return it?
+    return buildings ,merged
 
 def plot_clusters(buildings):
     # Define the colors for each cluster
