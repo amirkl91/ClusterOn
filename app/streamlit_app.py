@@ -270,13 +270,11 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
         # Create a temporary directory
             # Define file paths for each gpkg file
             merged_gpkg_path = os.path.join(tmpdirname, "merged.gpkg")
-            metrics_csv_path = os.path.join(tmpdirname, "metrics_with_percentiles.csv")
             standardized_csv_path = os.path.join(tmpdirname, "standardized.csv")
             buildings_gpkg_path = os.path.join(tmpdirname, "buildings.gpkg")
             
             # Convert DataFrames to CSV and save them
             merged.to_file(merged_gpkg_path, driver='GPKG')
-            metrics_with_percentiles.to_csv(metrics_csv_path, index=False)
             standardized.to_csv(standardized_csv_path, index=False)
             buildings.to_file(buildings_gpkg_path, driver='GPKG')
 
@@ -284,7 +282,6 @@ if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_sta
             zip_filename = os.path.join(tmpdirname, "gpkg_files.zip")
             with zipfile.ZipFile(zip_filename, 'w') as zipf:
                 zipf.write(merged_gpkg_path, arcname="merged.gpkg")
-                zipf.write(metrics_csv_path, arcname="metrics_with_percentiles.csv")
                 zipf.write(standardized_csv_path, arcname="standardized.csv")
                 zipf.write(buildings_gpkg_path, arcname="buildings.gpkg")
             
