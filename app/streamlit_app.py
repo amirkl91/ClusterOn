@@ -401,7 +401,6 @@ with plotcol:
         enable = 'computed_metrics' in st.session_state
         data_choice = st.radio('Choose data type:', ('Buildings','Streets'))
         if data_choice == 'Buildings':
-            print(merged.columns)
             gdf_to_plot = merged
             metrics_toplot = bldg_metrics_toplot
         elif data_choice == 'Streets':
