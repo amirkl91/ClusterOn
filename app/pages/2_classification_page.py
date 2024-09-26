@@ -7,7 +7,6 @@ import tempfile
 import geopandas as gpd
 
 ######################### Session state initialization #########################
-@st.cache_data
 def init_session_state():
     if 'rec_list' not in st.session_state:
         st.session_state.rec_list = None
@@ -133,6 +132,7 @@ def save_output_files():
         st.warning("Please upload files first, then run the preprocess.")
 
 ######################### Main App Code #########################
+
 # Streamlit App Title
 st.title("Morphological Analysis Tool 🌍📌📏")
 st.markdown("# Part 2: Classification of City Textures 🗺️")
@@ -154,14 +154,20 @@ if uploaded_zip:
 
 # Recommend clusters
 if st.button("Recommend the Number of Clusters"):
-    recommend_clusters()
+    if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
+        recommend_clusters()
+    else:
+        st.error("Please load data first")
 # Display the recommendation
 if st.session_state.rec_list is not None:
     st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {st.session_state.rec_list}")
 
 # Show cluster recommendation plots
 if st.button("Show Recommendation Calculation Plots"):
-    show_cluster_plots()
+    if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
+        show_cluster_plots()
+    else:
+        st.error("Please load data first")
 # Display the recommendation
 if st.session_state.cluster_fig is not None:
     st.pyplot(st.session_state.cluster_fig)
@@ -179,9 +185,12 @@ except ValueError:
 
 # Run classification
 if st.button("Run classification"):
-    run_classification(clusters_num)
-    if st.session_state.urban_types is not None:
-        plot_clusters_st(st.session_state.urban_types)
+    if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
+        run_classification(clusters_num)
+    else:
+        st.error("Please load data first")
+if st.session_state.urban_types is not None:
+    plot_clusters_st(st.session_state.urban_types)
 
 
 # Save output files
