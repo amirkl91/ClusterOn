@@ -13,8 +13,6 @@ import os
 import fiona
 import zipfile
 
-# Set the page layout to wide
-st.set_page_config(layout="wide")
 
 # Streamlit App Title
 st.title("Morphological Analysis Tool 🌍📌📏")
