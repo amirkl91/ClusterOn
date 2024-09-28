@@ -1,6 +1,7 @@
 import streamlit as st
 from stats_generation2 import output_cluster_stats, varify_cleaned_gdf, analyze_gdf
 import pandas as pd
+from helper_functions import find_overall_leading_metrics
 
 
 # Streamlit App Title
@@ -51,14 +52,16 @@ if st.button("Analyze Data"):
         cluster_merged = varify_cleaned_gdf(cluster_merged)  # Ensure it's a cleaned GeoDataFrame
         analyzed_gdf, results, global_results = analyze_gdf(cluster_merged, "cluster", None)
         
-        st.session_state['results'] = results  # Save processed data back to session state
+        st.session_state['results'] = results
+        st.session_state['global_results'] = global_results
         st.success("Data analysis completed successfully!")
     else:
         st.warning("Please upload data before analyzing.")
    
 results = st.session_state.get('results')
+global_results = st.session_state.get('global_results')
 # Make sure the file is uploaded and the cluster column exists
-if results is not None and cluster_column_name is not None:
+if results is not None and cluster_column_name is not None and global_results is not None:
     
     # Display the available clusters in the dataset
     unique_clusters = results.keys()
@@ -71,7 +74,12 @@ if results is not None and cluster_column_name is not None:
         # Display cluster statistics (you can customize this function further)
         stats_df = output_cluster_stats(selected_cluster, results)
         # Display some summary statistics (customize as needed)
+        st.write(f"Statistics of cluster {selected_cluster}")
         st.write(stats_df)
+
+        # display over-all leading metrics
+        st.write(f"Leading Metrics of cluster {selected_cluster}")
+        st.write(find_overall_leading_metrics(global_results, selected_cluster))
         
 else:
     st.warning("Please upload the data and ensure the cluster column exists.")
