@@ -93,23 +93,23 @@ def run_classification(clusters_num):
         st.warning("Please ensure all data is loaded before running classification.")
 
 def save_output_files():
-    if st.session_state['urban_types'] is not None:
-        urban_types = st.session_state['urban_types']
+    if st.session_state['cluster_merged'] is not None:
+        cluster_merged = st.session_state['cluster_merged']
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             try:
-                urban_types_path = os.path.join(tmpdirname, "urban_types.gpkg")
-                urban_types.to_file(urban_types_path, driver='GPKG')
+                cluster_merged_path = os.path.join(tmpdirname, "clusters.gpkg")
+                cluster_merged.to_file(cluster_merged_path, driver='GPKG')
 
                 zip_filename = os.path.join(tmpdirname, "gpkg_files.zip")
                 with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                    zipf.write(urban_types_path, arcname="urban_types.gpkg")
+                    zipf.write(cluster_merged_path, arcname="clusters.gpkg")
                 
                 with open(zip_filename, "rb") as gf:
                     st.download_button(
-                        label="Download GPKG of urban types",
+                        label="Download GPKG of clusters of urban types",
                         data=gf,
-                        file_name="urban_types.zip",
+                        file_name="clusters.zip",
                         mime="application/zip"
                     )
                 st.success("ZIP file successfully created and ready for download.")
@@ -117,18 +117,18 @@ def save_output_files():
                 st.error(f"An error occurred while saving the ZIP file: {e}")
 
             try:
-                urban_types_shp_path = os.path.join(tmpdirname, 'urban_types.shp.zip')
-                urban_types.to_file(urban_types_shp_path, driver='ESRI Shapefile')
+                cluster_merged_shp_path = os.path.join(tmpdirname, 'clusters.shp.zip')
+                cluster_merged.to_file(cluster_merged_shp_path, driver='ESRI Shapefile')
 
-                urban_types_zip = os.path.join(tmpdirname, 'urban_types.zip')
-                with zipfile.ZipFile(urban_types_zip, 'w') as mzip:
-                    mzip.write(urban_types_shp_path, 'urban_types.shp.zip')
+                cluster_merged_zip = os.path.join(tmpdirname, 'clusters.zip')
+                with zipfile.ZipFile(cluster_merged_zip, 'w') as mzip:
+                    mzip.write(cluster_merged_shp_path, 'clusters.shp.zip')
 
-                with open(urban_types_zip, 'rb') as mzf:
+                with open(cluster_merged_zip, 'rb') as mzf:
                     st.download_button(
-                        label='Download urban types data as .shp',
+                        label='Download clusters of urban types data as .shp',
                         data=mzf,
-                        file_name='urban_types_shp.zip',
+                        file_name='clusters_shp.zip',
                         mime='application/zip'
                     )
             except Exception as e:
