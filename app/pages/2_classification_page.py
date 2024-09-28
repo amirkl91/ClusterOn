@@ -52,16 +52,16 @@ def process_uploaded_zip(uploaded_zip):
     except Exception as e:
         st.sidebar.error(f"An error occurred while processing the ZIP file: {e}")
 
-def recommend_clusters():
+def recommend_clusters(max_clusters):
     if 'standardized' in st.session_state:
         rec_list = best_davies_bouldin_score(
             st.session_state.get('standardized'),
             model='kmeans', 
             standardize=False, 
             min_clusters=1, 
-            max_clusters=15,
+            max_clusters=max_clusters,
             n_init=13, 
-            random_state=42,
+            random_state=None,
             repeat=5
         )
         st.session_state.rec_list = rec_list
@@ -158,14 +158,18 @@ if uploaded_zip:
     process_uploaded_zip(uploaded_zip)
 
 # Recommend clusters
-if st.button("Recommend the Number of Clusters"):
-    if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
-        recommend_clusters()
-    else:
-        st.error("Please load data first")
-# Display the recommendation
-if st.session_state.rec_list is not None:
-    st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {st.session_state.rec_list}")
+recommend, ask_nclusts = st.columns([1, 1])
+with ask_nclusts:
+    max_nclusts = int(st.text_input('Maximal number of clusters to check', value=15))
+with recommend:
+    if st.button("Recommend the Number of Clusters"):
+        if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
+            recommend_clusters(max_nclusts)
+        else:
+            st.error("Please load data first")
+    # Display the recommendation
+    if st.session_state.rec_list is not None:
+        st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {st.session_state.rec_list}")
 
 # Show cluster recommendation plots
 if st.button("Show Recommendation Calculation Plots"):
@@ -177,16 +181,17 @@ if st.button("Show Recommendation Calculation Plots"):
 if st.session_state.cluster_fig is not None:
     st.pyplot(st.session_state.cluster_fig)
 
-# Input number of clusters
-clusters_num = st.text_input("Enter the number of clusters:", value="7")
-try:
-    clusters_num = int(clusters_num)
-    if clusters_num < 1:
-        st.warning("Please enter a number greater than 0.")
-    else:
-        st.success(f"You have selected {clusters_num} clusters.")
-except ValueError:
-    st.error("Please enter a valid integer for the number of clusters.")
+with recommend:
+    # Input number of clusters
+    clusters_num = st.text_input("Enter the number of clusters:", value="7")
+    try:
+        clusters_num = int(clusters_num)
+        if clusters_num < 1:
+            st.warning("Please enter a number greater than 0.")
+        else:
+            st.success(f"You have selected {clusters_num} clusters.")
+    except ValueError:
+        st.error("Please enter a valid integer for the number of clusters.")
 
 # Run classification
 if st.button("Run classification"):

@@ -19,7 +19,7 @@ def convert_df(_df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return _df.to_csv().encode("utf-8")
 
-@st.cache_data
+# @st.cache_data
 def return_osm_params(session_string):
     return st.session_state.get(session_string)[0], st.session_state.get(session_string)[1], st.session_state.get(session_string)[2]
 
@@ -101,7 +101,10 @@ def load_osm_data(data_source_key, data_type, is_streets):
     default_place = st.session_state['place'] if 'place' in st.session_state else 'Jerusalem'
     place = st.sidebar.text_input(f"Enter a city name for OSM {data_type} data", value=default_place, key=f"{data_source_key}_place")
     st.session_state['place'] = place
-    local_crs = st.sidebar.text_input(f"Enter Local CRS (e.g., EPSG:2039)", value="EPSG:2039", key=f"{data_source_key}_crs")
+
+    default_crs = st.session_state['crs'] if 'crs' in st.session_state else 'EPSG:2039'
+    local_crs = st.sidebar.text_input(f"Enter Local CRS (e.g., EPSG:2039)", value=default_crs, key=f"{data_source_key}_crs")
+    st.session_state['crs'] = local_crs
     # Add a hyperlink
     st.sidebar.markdown("[Don't know your CRS?](https://epsg.io/#google_vignette)", unsafe_allow_html=True)
     if is_streets:
@@ -150,11 +153,9 @@ def zip_data(tempdir, _streets, _buildings):
     st.session_state['metrics_zip'] = metrics_zip
     return metrics_zip
 
-def plot_metric(buildings, streets, data_toplot, metric_toplot):
+def plot_metric(data_toplot, metric_toplot):
     fig, ax = plt.subplots(figsize=(10,10))
-    buildings.plot(ax=ax, color='blue', alpha=0.25)
-    streets.plot(ax=ax, color='black', linewidth=0.1, alpha=0.25)
-    data_toplot.plot(ax=ax, column=metric_toplot, cmap='Spectral', scheme='naturalbreaks', legend=True)
+    data_toplot.plot(ax=ax, column=metric_toplot, cmap='Spectral', scheme='naturalbreaks', legend=True, linewidth=1.0)
     ax.set_axis_off()
     ctx.add_basemap(ax=ax, crs=streets.crs, source=ctx.providers.CartoDB.Positron)
     return fig
@@ -176,7 +177,7 @@ metrics_list = sorted([
     'equivalent_rectangular_index',
     'elongation',
     'rectangularity',
-    'shared_walls_length',
+    'shared_walls',
     'perimeter_wall',
     'alignment',
     'adjacency',
@@ -367,12 +368,12 @@ with plotcol:
             'fractal_dimension',
             'longest_axis_length',
             'mean_interbuilding_distance',
-            'neighbor_distance',
+            'neighbour_distance',
             'orientation',
             'perimeter',
             'rectangularity',
             'shape_index',
-            'shared_walls_length',
+            'shared_walls',
             'square_compactness',
             'squareness',
             'street_alignment',
@@ -414,7 +415,7 @@ with plotcol:
         if 'metric_to_plot' in st.session_state and st.session_state['metric_to_plot'] == metric_toplot:
             fig_toplot = st.session_state['fig_to_plot']
         else:
-            fig_toplot = plot_metric(buildings, streets, gdf_to_plot, metric_toplot)
+            fig_toplot = plot_metric(gdf_to_plot, metric_toplot)
             st.session_state['fig_to_plot'] = fig_toplot
 
         st.session_state['metric_to_plot'] = metric_toplot
@@ -425,7 +426,7 @@ with plotcol:
 # Load your images (you can use file paths, URLs, or use file uploader in Streamlit)
 image_1 = Image.open("app/app_design/momepyIcon.png")
 image_2 = Image.open("app/app_design/cidrIcon.png")
-image_3 = Image.open("app/app_design/flatJerus.JPG")
+# image_3 = Image.open("app/app_design/flatJerus.JPG")
 
 # Create 3 columns
 col1, col2, col3 = st.columns(3)

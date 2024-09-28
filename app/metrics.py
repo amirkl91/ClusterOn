@@ -52,8 +52,8 @@ def generate_building_metrics(buildings: gpd.geodataframe, height_column_name=No
         buildings['elongation'] = momepy.elongation(buildings)
     if selected is None or selected['rectangularity']:
         buildings['rectangularity'] = momepy.rectangularity(buildings)
-    if selected is None or selected['shared_walls_length']:
-        buildings['shared_walls_length'] = momepy.shared_walls(buildings) / buildings['perimeter']
+    if selected is None or selected['shared_walls']:
+        buildings['shared_walls'] = momepy.shared_walls(buildings) / buildings['perimeter']
     if selected is None or selected['perimeter_wall']:
         buildings['perimeter_wall'] = momepy.perimeter_wall(buildings)  # TODO: check for possible parameters
         buildings['perimeter_wall'] = buildings['perimeter_wall'].fillna(0)

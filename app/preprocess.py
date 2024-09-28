@@ -149,9 +149,11 @@ def get_tessellation(buildings, streets=None, tess_mode='enclosed', clim='adapti
         tessellations = tessellations[tessellations['tID'] >= 0]
         tessellations = tessellations.drop_duplicates('tID', keep='first')
 
-        collapsed, _ = momepy.verify_tessellation(tessellations, buildings)
+        collapsed, multypolygons = momepy.verify_tessellation(tessellations, buildings)
         if len(collapsed) > 0:
             buildings.drop(collapsed, inplace=True)
+            if len(multypolygons) > 0:
+                buildings.drop(multypolygons, inplace=True)
             tessellations, enclosures = get_tessellation(buildings, streets, tess_mode, clim)
             
 
