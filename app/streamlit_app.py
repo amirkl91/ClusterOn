@@ -15,7 +15,7 @@ import tempfile
 
 # Initialize session state variables
 def initialize_session_state():
-    session_keys = ['buildings', 'streets', 'place', 'crs', 'buildings_gdf', 'streets_gdf', 'height_column_name', 'computed_metrics', 'merged', 'metrics_with_percentiles', 'standardized', 'metrics_zip']
+    session_keys = ['buildings', 'streets', 'place', 'crs', 'buildings_gdf', 'streets_gdf', 'height_column_name', 'computed_metrics', 'merged', 'metrics_with_percentiles', 'standardized', 'metrics_zip', 'buildings_uploaded', 'streets_uploaded']
     for key in session_keys:
         if key not in st.session_state:
             st.session_state[key] = None
@@ -79,7 +79,8 @@ def load_gdb_data(data_source_key, data_type):
     st.sidebar.header(f"Upload {data_type} Data")
     uploaded_file = st.sidebar.file_uploader(f"Upload a zip file containing a {data_type} GDB", type="zip", key=f"{data_source_key}_upload")
 
-    if uploaded_file:
+    if uploaded_file is not None:
+        st.write("here")
         with zipfile.ZipFile(uploaded_file, "r") as zip_ref:
             zip_ref.extractall(f"temp_extracted_{data_source_key}")
 
@@ -100,6 +101,10 @@ def load_gdb_data(data_source_key, data_type):
                         gdf = load_gdb_layer(gdb_path, layer_index=layer_index)
                         st.session_state[f'{data_source_key}_gdf'] = gdf
                         st.sidebar.write(gdf.head())
+                        if data_type == 'buildings' :
+                            st.session_state['buildings_uploaded'] = True
+                        else: 
+                           st.session_state['streets_uploaded'] = True 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
@@ -114,11 +119,13 @@ def load_osm_data(data_source_key, data_type, is_streets):
     st.session_state['crs'] = local_crs
     st.sidebar.markdown("[Don't know your CRS?](https://epsg.io/#google_vignette)", unsafe_allow_html=True)
     if is_streets:
+        st.session_state['streets_uploaded'] = True
         network_type = st.sidebar.selectbox(f"Select Network Type for {data_type}", ["drive", "walk", "bike"], index=0, key=f"{data_source_key}_network")
     else:
+        st.session_state['buildings_uploaded'] = True
         network_type = None
     if st.sidebar.button(f"Load OSM {data_type} Data", key=f"{data_source_key}_osm_load"):
-        st.sidebar.write(f"OSM data fetched")
+        st.sidebar.success(f"OSM data fetched")
         if 'zip_filename' in st.session_state:
             del st.session_state['zip_filename']
         if 'metrics_zip' in st.session_state:
@@ -153,6 +160,7 @@ def upload_buildings_data():
     else:
         place, local_crs, network_type = load_osm_data("buildings", "buildings", False)
         st.session_state['buildings_data'] = (place, local_crs, network_type)
+    
 
 def upload_streets_data():
     st.sidebar.header("Choose Streets Data Source")
@@ -165,25 +173,24 @@ def upload_streets_data():
         st.session_state['streets_data'] = (place, local_crs, network_type)
 
 def preprocess_and_generate_metrics():
-    if st.button("Run preprocessing and generate metrics"):
-        buildings_gdf = st.session_state.get('buildings_gdf')
-        streets_gdf = st.session_state.get('streets_gdf')
-        height_column_name = st.session_state.get('height_column_name')
+    buildings_gdf = st.session_state.get('buildings_gdf')
+    streets_gdf = st.session_state.get('streets_gdf')
+    height_column_name = st.session_state.get('height_column_name')
 
-        session_string = 'streets_data' if streets_gdf is None else 'buildings_data'
-        place, local_crs, network_type = return_osm_params(session_string)
-        merged, metrics_with_percentiles, standardized, buildings, streets = process_data(
-            place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)
-        
-        st.success("Preprocessing completed!")
-        st.session_state['computed_metrics'] = True
-        st.session_state.update({
-            'merged': merged,
-            'metrics_with_percentiles': metrics_with_percentiles,
-            'standardized': standardized,
-            'buildings': buildings,
-            'streets': streets
-        })
+    session_string = 'streets_data' if streets_gdf is None else 'buildings_data'
+    place, local_crs, network_type = return_osm_params(session_string)
+    merged, metrics_with_percentiles, standardized, buildings, streets = process_data(
+        place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)
+    
+    st.success("Preprocessing completed!")
+    st.session_state['computed_metrics'] = True
+    st.session_state.update({
+        'merged': merged,
+        'metrics_with_percentiles': metrics_with_percentiles,
+        'standardized': standardized,
+        'buildings': buildings,
+        'streets': streets
+    })
 
 def save_processed_data():
     if 'merged' in st.session_state and 'metrics_with_percentiles' in st.session_state:
@@ -392,7 +399,11 @@ with datacol:
     ##################################################
 
     ######################### pre-process: #########################
-    preprocess_and_generate_metrics()
+    if st.button("Run preprocessing and generate metrics"):
+        if st.session_state.get('buildings_uploaded') and st.session_state.get('streets_uploaded'):
+            preprocess_and_generate_metrics()
+        else:
+            st.error("Please load data first")
     ##################################################
 
     ######################### save: #########################
