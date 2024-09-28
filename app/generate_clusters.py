@@ -177,10 +177,11 @@ def plot_clusters_st(buildings):
     unique_clusters = sorted(buildings['cluster'].unique())
     color_map = {cluster: colors[i % len(colors)] for i, cluster in enumerate(unique_clusters)}
 
-    # Map colors to the 'cluster' column in buildings
-    buildings['color'] = buildings['cluster'].map(color_map)
-    # Plot buildings colored by the custom color column
-    buildings.plot(color=buildings['color'], legend=False, ax=ax)
+    # Map colors to the 'cluster' column in buildings temporarily without adding a column
+    building_colors = buildings['cluster'].map(color_map)
+
+    # Plot buildings colored by the custom color mapping
+    buildings.plot(color=building_colors, legend=False, ax=ax)
 
     # Add title and customize plot
     ax.set_title('Urban Types by Cluster', fontsize=16)
