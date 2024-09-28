@@ -7,23 +7,15 @@ import tempfile
 import geopandas as gpd
 
 ######################### Session state initialization #########################
+# Initialize session state variables
 def init_session_state():
-    if 'rec_list' not in st.session_state:
-        st.session_state.rec_list = None
-    if 'merged' not in st.session_state:
-        st.session_state['merged'] = None
-    if 'standardized' not in st.session_state:
-        st.session_state['standardized'] = None
-    if 'buildings' not in st.session_state:
-        st.session_state['buildings'] = None
-    if 'urban_types' not in st.session_state:
-        st.session_state['urban_types'] = None
-    if 'cluster_fig' not in st.session_state:
-        st.session_state['cluster_fig'] = None
-    if 'cluster_merged' not in st.session_state:
-        st.session_state['cluster_merged'] = None
+    session_keys = ['rec_list', 'merged', 'standardized', 'buildings', 'urban_types', 'cluster_fig', 'cluster_merged']
+    for key in session_keys:
+        if key not in st.session_state:
+            st.session_state[key] = None
 
 init_session_state()
+
 ######################### Helper functions #########################
 
 @st.cache_data
