@@ -6,7 +6,7 @@ from helper_functions import find_overall_leading_metrics
 
 # Streamlit App Title
 st.title("Morphological Analysis Tool 🌍📌📏")
-st.sidebar.markdown("# Analysis of city textures 📊")
+st.markdown("# Part 3: Analysis of city textures 📊")
 
 ######################### upload: #########################
 

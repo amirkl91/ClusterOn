@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import contextily as ctx
 import pandas as pd
 import momepy
+import geopandas as gpd
 import os
 import fiona
 import zipfile
@@ -15,7 +16,7 @@ import tempfile
 
 # Initialize session state variables
 def initialize_session_state():
-    session_keys = ['buildings', 'streets', 'place', 'crs', 'buildings_gdf', 'streets_gdf', 'height_column_name', 'computed_metrics', 'merged', 'metrics_with_percentiles', 'standardized', 'metrics_zip', 'buildings_uploaded', 'streets_uploaded']
+    session_keys = ['buildings', 'streets', 'place', 'crs', 'buildings_gdf', 'streets_gdf', 'c', 'cluster_column_name', 'computed_metrics', 'merged', 'metrics_with_percentiles', 'standardized', 'metrics_zip', 'buildings_uploaded', 'streets_uploaded']
     for key in session_keys:
         if key not in st.session_state:
             st.session_state[key] = None
@@ -31,7 +32,7 @@ def return_osm_params(session_string):
     return st.session_state.get(session_string)[0], st.session_state.get(session_string)[1], st.session_state.get(session_string)[2]
 
 @st.cache_data
-def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, height_column_name, user_selections):
+def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, height_column_name, cluster_column_name, user_selections):
     if _buildings_gdf is not None:
         # If buildings data is from GDB
         if isinstance(_buildings_gdf, pd.DataFrame):  
@@ -51,7 +52,7 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, h
     streets, junctions = pp.get_streets(streets=streets, local_crs=local_crs, get_juncions=True)
     junctions, streets = metrics.generate_junctions_metrics(streets, user_selections, selected=user_selections)
     buildings = pp.get_buildings(buildings=buildings, streets=streets, junctions=junctions, 
-                                 local_crs=local_crs, height_name=height_column_name)
+                                 local_crs=local_crs, height_name=height_column_name, cluster_name=cluster_column_name)
     # Generate tessellation
     tessellations = pp.get_tessellation(buildings=buildings, streets=streets, 
                                         tess_mode='morphometric', clim='adaptive')
@@ -80,34 +81,92 @@ def load_gdb_data(data_source_key, data_type):
     uploaded_file = st.sidebar.file_uploader(f"Upload a zip file containing a {data_type} GDB", type="zip", key=f"{data_source_key}_upload")
 
     if uploaded_file is not None:
-        st.write("here")
         with zipfile.ZipFile(uploaded_file, "r") as zip_ref:
             zip_ref.extractall(f"temp_extracted_{data_source_key}")
 
         extracted_items = os.listdir(f"temp_extracted_{data_source_key}")
+        # Check for GDB or Shapefile
         gdb_path = next((os.path.join(f"temp_extracted_{data_source_key}", item) for item in extracted_items if item.endswith(".gdb")), None)
+        shp_path = next((os.path.join(f"temp_extracted_{data_source_key}", item) for item in extracted_items if item.endswith(".shp")), None)
 
-        if gdb_path:
+        # Print all the extracted files
+        extract_dir = f"temp_extracted_{data_source_key}"
+        st.write(f"Files in {extract_dir}:")
+        for item in extracted_items:
+            st.write(item)  # This will print all the files in the directory
+
+        # if gdb_path:
+        #     try:
+        #         if not os.path.exists(gdb_path) or not os.path.isdir(gdb_path):
+        #             st.sidebar.error(f"The specified path does not exist or is not a valid directory for {data_type} GDB.")
+        #         else:
+        #             layers = fiona.listlayers(gdb_path)
+        #             st.sidebar.write(f"Layers found in the {data_type} GDB: {layers}")
+
+        #             layer_index = st.sidebar.selectbox(f"Select a {data_type} layer", range(len(layers)), format_func=lambda x: layers[x], key=f"{data_source_key}_layer")
+
+        #             if st.sidebar.button(f"Load {data_type} Layer", key=f"{data_source_key}_load"):
+        #                 gdf = load_gdb_layer(gdb_path, layer_index=layer_index)
+        #                 st.session_state[f'{data_source_key}_gdf'] = gdf
+        #                 st.sidebar.write(gdf.head())
+        #                 if data_type == 'buildings' :
+        #                     st.session_state['buildings_uploaded'] = True
+        #                 else: 
+        #                    st.session_state['streets_uploaded'] = True 
+        #     except Exception as e:
+        #         st.error(f"An error occurred: {e}")
+        # Handle GDB upload
+         # Handle Shapefile upload
+        if shp_path:
+            st.write("We in shp")
+            st.write(gdb_path)
+            st.write(shp_path)
+
+            try:
+                # Load the shapefile into a GeoDataFrame
+                gdf = gpd.read_file(shp_path)
+                st.session_state[f'{data_source_key}_gdf'] = gdf
+                st.sidebar.write(f"{data_type} shapefile loaded successfully!")
+                st.sidebar.write(gdf.head())
+                
+                # Track upload status
+                if data_type == 'buildings':
+                    st.session_state['buildings_uploaded'] = True
+                else:
+                    st.session_state['streets_uploaded'] = True
+            except Exception as e:
+                st.error(f"An error occurred while reading the shapefile: {e}")
+
+        elif gdb_path:
+            st.write("We in gdb")
+            st.write(gdb_path)
             try:
                 if not os.path.exists(gdb_path) or not os.path.isdir(gdb_path):
                     st.sidebar.error(f"The specified path does not exist or is not a valid directory for {data_type} GDB.")
                 else:
+                    # List layers in GDB
                     layers = fiona.listlayers(gdb_path)
                     st.sidebar.write(f"Layers found in the {data_type} GDB: {layers}")
 
+                    # Select layer
                     layer_index = st.sidebar.selectbox(f"Select a {data_type} layer", range(len(layers)), format_func=lambda x: layers[x], key=f"{data_source_key}_layer")
 
                     if st.sidebar.button(f"Load {data_type} Layer", key=f"{data_source_key}_load"):
-                        gdf = load_gdb_layer(gdb_path, layer_index=layer_index)
+                        gdf = gpd.read_file(gdb_path, layer=layers[layer_index])
                         st.session_state[f'{data_source_key}_gdf'] = gdf
                         st.sidebar.write(gdf.head())
-                        if data_type == 'buildings' :
+
+                        # Track upload status
+                        if data_type == 'buildings':
                             st.session_state['buildings_uploaded'] = True
-                        else: 
-                           st.session_state['streets_uploaded'] = True 
+                        else:
+                            st.session_state['streets_uploaded'] = True 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+        else:
+            st.sidebar.error(f"No valid GDB or Shapefile found in the uploaded zip for {data_type} data.")
 
+       
 def load_osm_data(data_source_key, data_type, is_streets):
     st.sidebar.header(f"Enter {data_type} Data from OSM")
     default_place = st.session_state['place'] if 'place' in st.session_state else 'Jerusalem'
@@ -156,7 +215,9 @@ def upload_buildings_data():
     if bld_data_source == "Upload buildings GDB file":
         load_gdb_data("buildings", "buildings")
         height_column_name = st.sidebar.text_input("Enter the name of the **height** column:", value=None)
+        cluster_column_name = st.sidebar.text_input("Enter the name of the **cluster** column:", value=None)
         st.session_state['height_column_name'] = height_column_name
+        st.session_state['cluster_column_name'] = cluster_column_name
     else:
         place, local_crs, network_type = load_osm_data("buildings", "buildings", False)
         st.session_state['buildings_data'] = (place, local_crs, network_type)
@@ -176,11 +237,12 @@ def preprocess_and_generate_metrics():
     buildings_gdf = st.session_state.get('buildings_gdf')
     streets_gdf = st.session_state.get('streets_gdf')
     height_column_name = st.session_state.get('height_column_name')
+    cluster_column_name = st.session_state.get('cluster_column_name')
 
     session_string = 'streets_data' if streets_gdf is None else 'buildings_data'
     place, local_crs, network_type = return_osm_params(session_string)
     merged, metrics_with_percentiles, standardized, buildings, streets = process_data(
-        place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, user_selections)
+        place, network_type, local_crs, buildings_gdf, streets_gdf, height_column_name, cluster_column_name, user_selections)
     
     st.success("Preprocessing completed!")
     st.session_state['computed_metrics'] = True
@@ -376,6 +438,7 @@ user_selections = {}
 st.set_page_config(layout="wide")
 
 st.title("Morphological Analysis Tool 🌍📌📏")
+st.markdown("# Part 1: Preprocess 🧹 & Metrics generation 📐")
 # Description paragraph
 st.markdown("""
     ## Steps to Process Your Data:
@@ -390,8 +453,6 @@ datacol, plotcol = st.columns(2)
 ### Data side of app
 with datacol:
     display_metrics_window(metrics_list)
-
-    st.sidebar.markdown("# Preprocess 🧹 & Metrics generation 📐")
 
     ######################### upload: #########################
     upload_buildings_data()
