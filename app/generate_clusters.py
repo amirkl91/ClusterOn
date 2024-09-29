@@ -106,9 +106,10 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
     best_scores = {}
     scores = _clusters_scores(gdf, model, standardize, min_clusters, max_clusters, n_init, random_state)
     K = range(min_clusters, max_clusters + 1)
-    distortions = _elbow(gdf, K)
-    scores['distortion'] = distortions if len(distortions) == len(scores) else distortions[1:]
-    best_scores['distortion'] = KneeLocator(K, distortions, curve='convex', direction='decreasing').elbow
+    if model == 'kmeans':
+        distortions = _elbow(gdf, K)
+        scores['distortion'] = distortions if len(distortions) == len(scores) else distortions[1:]
+        best_scores['distortion'] = KneeLocator(K, distortions, curve='convex', direction='decreasing').elbow
     best_scores['silhouette'] = scores.loc[scores['K'] == scores['silhouette'].idxmax()]['K'].values[0]
     best_scores['davies_bouldin'] = scores.loc[scores['K'] == scores['davies_bouldin'].idxmin()]['K'].values[0]
     best_scores['calinski_harabasz'] = scores.loc[scores['K'] == scores['calinski_harabasz'].idxmax()]['K'].values[0]
@@ -131,8 +132,8 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
 
     return fig,axes
 
-def add_cluster_col(merged, buildings, standardized, clusters_num):
-    cgram = Clustergram(range(clusters_num, clusters_num+1), n_init=10, random_state=42)
+def add_cluster_col(merged, buildings, standardized, clusters_num, model):
+    cgram = Clustergram(range(clusters_num, clusters_num+1), n_init=10, random_state=None, method=model)
     cgram.fit(standardized.fillna(0))
     merged["cluster"] = cgram.labels[clusters_num].values
     buildings["cluster"] = merged["cluster"]
