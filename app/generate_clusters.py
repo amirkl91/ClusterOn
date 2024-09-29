@@ -60,8 +60,10 @@ def get_cluster(gdf: gpd.GeoDataFrame, model='kmeans', standardize=False, min_cl
     if standardize:
         gdf = (gdf - gdf.mean()) / gdf.std()
     K = range(min_clusters, max_clusters + 1)
-
-    cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
+    if model == 'hierarchical':
+        cgram = Clustergram(K, method=model)
+    else:
+        cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
     cgram.fit(gdf.fillna(0))
     return cgram
 
