@@ -48,7 +48,7 @@ def recommend_clusters(max_clusters):
     if 'standardized' in st.session_state:
         rec_list = best_davies_bouldin_score(
             st.session_state.get('standardized'),
-            model='kmeans', 
+            model=st.session_state['cluster_model'], 
             standardize=False, 
             min_clusters=1, 
             max_clusters=max_clusters,
@@ -62,22 +62,22 @@ def show_cluster_plots():
     if 'standardized' in st.session_state:
         cluster_fig, axes = plot_num_of_clusters(
             st.session_state.get('standardized'), 
-            model='kmeans', 
+            model=st.session_state['cluster_model'], 
             standardize=False, 
             min_clusters=1,
             max_clusters=15,
             n_init=13, 
-            random_state=42
+            random_state=None,
         )
         st.session_state.cluster_fig = cluster_fig
 
-def run_classification(clusters_num):
+def run_classification(clusters_num, model):
     if all(key in st.session_state and not st.session_state[key].empty for key in ['merged', 'standardized', 'buildings']):
         merged = st.session_state['merged']
         standardized = st.session_state['standardized']
         buildings = st.session_state['buildings']
 
-        urban_types, cluster_merged = add_cluster_col(merged, buildings, standardized, clusters_num)
+        urban_types, cluster_merged = add_cluster_col(merged, buildings, standardized, clusters_num, model)
         st.session_state['urban_types'] = urban_types
         st.session_state['cluster_merged'] = cluster_merged
 
@@ -153,6 +153,8 @@ if uploaded_zip:
 recommend, ask_nclusts = st.columns([1, 1])
 with ask_nclusts:
     max_nclusts = int(st.text_input('Maximal number of clusters to check', value=15))
+    cluster_model = st.selectbox('Clustering method', ['kmeans', 'gmm', 'mini-batch kmeans', 'hierarchical'])
+    st.session_state['cluster_model'] = 'minibatchkmeans' if cluster_model == 'mini-batch kmeans' else cluster_model
 with recommend:
     if st.button("Recommend the Number of Clusters"):
         if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
@@ -188,7 +190,8 @@ with recommend:
 # Run classification
 if st.button("Run classification"):
     if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
-        run_classification(clusters_num)
+        model = st.session_state['cluster_model']
+        run_classification(clusters_num, model)
     else:
         st.error("Please load data first")
 if st.session_state.urban_types is not None:
