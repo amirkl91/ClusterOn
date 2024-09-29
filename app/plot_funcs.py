@@ -4,6 +4,9 @@ import pandas as pd
 import matplotlib.colors as mcolors
 import streamlit as st
 import seaborn as sns
+import matplotlib.patches as mpatches
+import contextily as ctx
+import geopandas as gpd
 
 
 def plot_outliers(gdf, results, classification_column):
@@ -168,7 +171,7 @@ def plot_top_important_metrics(feature_importances, features_num=10):
     plt.title(f"Top {features_num} metrics that influence the classification the most")
     plt.ylabel("Feature Importance")
     plt.xlabel("Metrics")
-    plt.xticks(rotation=50, ha="right ", fontsize=13)
+    plt.xticks(rotation=50, ha="right", fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -322,20 +325,27 @@ def plot_cluster_similarity(silhouette_values, target, silhouette_avg):
 
 
 def streamlit_plot_top_important_metrics(feature_importances, num_features=10):
-    # Create a figure and axis for plotting
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Create a smaller figure and axis for plotting
+    fig, ax = plt.subplots(figsize=(7, 5))  # Reduced figure size
 
-    # Plot the top 10 features
+    # Plot the top features
     feature_importances.head(num_features).plot(kind="bar", color="skyblue", ax=ax)
 
-    # Set the title and labels
+    # Set the title and labels with adjusted font sizes
     ax.set_title(
-        f"Top {num_features} metrics that influence the classification the most"
+        f"Top {num_features} metrics that influence the classification the most",
+        fontsize=12,  # Reduced title font size
     )
-    ax.set_ylabel("Feature Importance")
+    ax.set_ylabel("Feature Importance", fontsize=11)  # Reduced y-axis label font size
 
-    # Rotate x-tick labels for better readability
-    plt.xticks(rotation=45, ha="right", fontsize=12)
+    # Replace "_" with " " in x-tick labels and adjust font size
+    labels = [
+        label.replace("_", " ")
+        for label in feature_importances.head(num_features).index
+    ]
+    ax.set_xticklabels(
+        labels, rotation=45, ha="right", fontsize=9
+    )  # Reduced font size for x-axis labels
 
     # Adjust layout for a clean look
     plt.tight_layout()
@@ -389,33 +399,63 @@ def streamlit_plot_flexibility_scores_table(results):
     st.dataframe(df)
 
 
-def streamlit_plot_outliers(gdf, results, classification_column):
+def streamlit_plot_outliers(gdf, results):
     """
     Function to plot the outliers from all clusters in different colors, adapted for Streamlit.
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Display message while plotting
+    st.write("Plotting outliers...")
 
-    # Plot the base map (all buildings/streets)
-    gdf.plot(ax=ax, color="lightgrey", label="All elements")
+    # Create a figure and axis with a geographic projection
+    fig, ax = plt.subplots(figsize=(8, 8))
 
-    # Collect all outliers from each cluster and plot them
-    cmap = plt.get_cmap("tab10")  # Use a colormap for distinct colors
-    cluster_colors = {}
+    # Define colors for clusters
+    colors = plt.get_cmap("tab20").colors
 
-    for i, cluster in enumerate(results.keys()):
+    # Get unique clusters from the results
+    unique_clusters = sorted(results.keys())
+    color_map = {
+        cluster: colors[i % len(colors)] for i, cluster in enumerate(unique_clusters)
+    }
+
+    # Create an empty GeoDataFrame to store outliers
+    all_outliers = gpd.GeoDataFrame()
+
+    # Collect all outliers for each cluster and combine them into one GeoDataFrame
+    for cluster in unique_clusters:
         cluster_outliers = results[cluster]["outliers"]
-        if cluster_outliers.empty:
-            continue  # Skip clusters with no outliers
-        cluster_outliers.plot(
-            ax=ax, marker="o", color=cmap(i), label=f"Cluster {cluster} Outliers"
-        )
-        cluster_colors[cluster] = cmap(i)  # Store color for future use
+        # Add cluster label to each outlier for coloring purposes
+        cluster_outliers["cluster"] = cluster
+        all_outliers = pd.concat([all_outliers, cluster_outliers])
 
-    plt.title("Outliers for All Clusters")
-    plt.legend()
-    plt.tight_layout()
+    # Ensure the outliers have the same CRS as the original gdf
+    all_outliers = all_outliers.set_crs(gdf.crs, allow_override=True)
 
-    # Use Streamlit to display the plot
+    # Map colors to the 'cluster' column for outliers
+    outlier_colors = all_outliers["cluster"].map(color_map)
+
+    # Plot outliers colored by the custom color mapping
+    all_outliers.plot(color=outlier_colors, legend=False, ax=ax)
+
+    # Add title and customize plot
+    ax.set_title("Outliers by Cluster", fontsize=16)
+    ax.set_axis_off()  # Optionally remove axis lines for a cleaner look
+
+    # Create legend handles
+    legend_handles = [
+        mpatches.Patch(color=color_map[cluster], label=f"Cluster {cluster}")
+        for cluster in unique_clusters
+    ]
+
+    # Add basemap using contextily
+    ctx.add_basemap(ax, crs=gdf.crs, source=ctx.providers.CartoDB.Positron)
+
+    # Add the custom legend
+    ax.legend(
+        handles=legend_handles, title="Cluster", bbox_to_anchor=(1, 1), loc="upper left"
+    )
+
+    # Show plot in Streamlit
     st.pyplot(fig)
 
 
