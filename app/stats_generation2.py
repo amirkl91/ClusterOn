@@ -57,9 +57,9 @@ def analyze_gdf(gdf, classification_column, csv_folder_path):
     )
 
     # Plot cluster information
-    plot_all_cluster_results(
-        gdf, cluster_results, classification_column, global_summary
-    )
+    # plot_all_cluster_results(
+    #     gdf, cluster_results, classification_column, global_summary
+    # )
     # # plot global information
     pf.plot_top_important_metrics(global_summary["supervised_importances"])
 
@@ -95,21 +95,17 @@ def perform_global_analysis(gdf, classification_column, cluster_results):
         cluster_results, key=lambda x: cluster_results[x]["outlier_ratio"]
     )
     cleaned = gdf.drop(columns=[classification_column])
-    global_results = analyze_cluster(cleaned)
-    print("keys", global_results.keys())
+    global_stats = analyze_cluster(cleaned)
+    print("keys", global_stats.keys())
     # Return global summary
     global_summary = {
         "supervised_importances": supervised_importances,
         "similarity_results": similarity_results,
         "highest_outlier_cluster": highest_outlier_cluster,
         "lowest_outlier_cluster": lowest_outlier_cluster,
-        "global_results": global_results,
+        "global_stats": global_stats,
     }
-    # plot_all_cluster_results(
-    #     cleaned,
-    #     global_results,
-    #     classification_column,
-    # )
+    # output_global_stats(global_stats)
     return global_summary
 
 
@@ -448,6 +444,7 @@ def output_global_stats(global_results):
         vif_data.set_index("feature"), left_index=True, right_index=True, how="left"
     )
     combined_df = combined_df.round(2)
+    print(combined_df.columns)
     return combined_df
 
 
