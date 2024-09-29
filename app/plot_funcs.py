@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.colors as mcolors
 import streamlit as st
+import seaborn as sns
 
 
 def plot_outliers(gdf, results, classification_column):
@@ -159,15 +160,15 @@ def save_flexibility_scores_to_csv(results, output_filename="flexibility_scores.
     flexibility_df.to_csv(output_filename, index=False)
 
 
-def plot_top_important_metrics(feature_importances):
+def plot_top_important_metrics(feature_importances, features_num=10):
     plt.figure(figsize=(10, 6))
-    feature_importances.head(10).plot(
+    feature_importances.head(features_num).plot(
         kind="bar", color="skyblue"
     )  # Plot the top 10 features
-    plt.title("Top 10 metrics that influence the classification the most")
+    plt.title(f"Top {features_num} metrics that influence the classification the most")
     plt.ylabel("Feature Importance")
     plt.xlabel("Metrics")
-    plt.xticks(rotation=45, ha="right")
+    plt.xticks(rotation=50, ha="right ", fontsize=13)
     plt.tight_layout()
     plt.show()
 
@@ -320,20 +321,21 @@ def plot_cluster_similarity(silhouette_values, target, silhouette_avg):
 #########################################streamlit#############################
 
 
-def streamlit_plot_top_important_metrics(feature_importances):
+def streamlit_plot_top_important_metrics(feature_importances, num_features=10):
     # Create a figure and axis for plotting
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Plot the top 10 features
-    feature_importances.head(10).plot(kind="bar", color="skyblue", ax=ax)
+    feature_importances.head(num_features).plot(kind="bar", color="skyblue", ax=ax)
 
     # Set the title and labels
-    ax.set_title("Top 10 metrics that influence the classification the most")
+    ax.set_title(
+        f"Top {num_features} metrics that influence the classification the most"
+    )
     ax.set_ylabel("Feature Importance")
-    ax.set_xlabel("Metrics")
 
     # Rotate x-tick labels for better readability
-    plt.xticks(rotation=45, ha="right")
+    plt.xticks(rotation=45, ha="right", fontsize=12)
 
     # Adjust layout for a clean look
     plt.tight_layout()
@@ -442,3 +444,79 @@ def streamlit_plot_overall_vif(results):
 
     # Use Streamlit to display the plot
     st.pyplot(fig)
+
+
+####################################################unused#########################
+def plot_cluster_analysis(gdf, results, cluster_number):
+    # Get the numeric columns again
+    numeric_columns = gdf.select_dtypes(include=[float, int]).columns
+
+    # 1. Plot basic statistics (mean, variance) in a separate figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+    stats = results["basic_stats"]
+    ax.bar(stats.index, stats["mean"], yerr=stats["variance"], capsize=5, color="blue")
+    ax.set_title(f"Mean and Variance of Metrics for Cluster {cluster_number}")
+    ax.set_xticklabels(stats.index, rotation=45, ha="right")
+    plt.show()
+
+    # 2. Plot correlation matrix in a separate figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.heatmap(results["correlation_matrix"], annot=True, cmap="coolwarm", ax=ax)
+    ax.set_title(f"Correlation Matrix of Metrics for Cluster {cluster_number}")
+    plt.show()
+
+    # 3. Plot the outliers (IQR) and LOF outliers in the same figure
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+
+    # Plot IQR outliers
+    base = gdf.plot(ax=axes[0], color="lightgrey")
+    results["outliers"].plot(ax=base, color="red", marker="o", label="Outliers")
+    axes[0].set_title(f"Outliers Detected by IQR for Cluster {cluster_number}")
+
+    # Plot LOF outliers
+    base = gdf.plot(ax=axes[1], color="lightgrey")
+    results["lof_outliers"].plot(
+        ax=base, color="orange", marker="x", label="LOF Outliers"
+    )
+    axes[1].set_title(
+        f"Local Outlier Factor (LOF) Outliers for Cluster {cluster_number}"
+    )
+
+    plt.tight_layout()
+    plt.show()
+
+    # 4. Plot VIF (Variance Inflation Factor) in a separate figure with explanation
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(results["vif"]["feature"], results["vif"]["VIF"], color="purple")
+    ax.set_title(f"Variance Inflation Factor (VIF) - Cluster {cluster_number}")
+    ax.set_xticklabels(results["vif"]["feature"], rotation=45, ha="right")
+    plt.show()
+
+    # 5. Plot Maximum and Minimum values as text only with adjusted spacing
+    fig, ax = plt.subplots(figsize=(10, 6))
+    max_values = gdf[numeric_columns].max()
+    min_values = gdf[numeric_columns].min()
+    ind = np.arange(len(numeric_columns))
+
+    # Adjust vertical spacing with slightly more space to avoid overlap
+    y_positions = np.linspace(
+        0.9, 0.1, len(numeric_columns)
+    )  # Adjust range to distribute better
+
+    # Loop through the metrics and display the values as text
+    for i, metric in enumerate(numeric_columns):
+        # Create a formatted string with the metric, max, and min values
+        text = (
+            f"{metric}:\nMax: {round(max_values[i], 2)}, Min: {round(min_values[i], 2)}"
+        )
+
+        # Display the text on the plot, adjust the y_positions for spacing
+        ax.text(0.5, y_positions[i], text, fontsize=12, ha="center", va="center")
+
+    # Hide the axis since it's just text
+    ax.set_axis_off()
+
+    # Set title and display
+    plt.title(f"Maximum and Minimum Values for Cluster {cluster_number}")
+    plt.tight_layout()
+    plt.show()
