@@ -60,8 +60,10 @@ def get_cluster(gdf: gpd.GeoDataFrame, model='kmeans', standardize=False, min_cl
     if standardize:
         gdf = (gdf - gdf.mean()) / gdf.std()
     K = range(min_clusters, max_clusters + 1)
-
-    cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
+    if model == 'hierarchical':
+        cgram = Clustergram(K, method=model)
+    else:
+        cgram = Clustergram(K, method=model, n_init=n_init, random_state=random_state)
     cgram.fit(gdf.fillna(0))
     return cgram
 
@@ -121,7 +123,6 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
 
     # Iterate through each method and create a plot
     for i, method in enumerate(methods):
-        print(method, best_scores[method])
         ax = axes[i // 2, i % 2]  # Positioning subplots in 2x2 grid
         ax.plot(scores['K'], scores[method], marker='o', label=method)
         ax.vlines(best_scores[method], ax.get_ylim()[0], ax.get_ylim()[1], linestyles='dashed')
