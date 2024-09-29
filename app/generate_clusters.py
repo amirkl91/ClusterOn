@@ -134,8 +134,8 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
 
     return fig,axes
 
-def add_cluster_col(merged, buildings, standardized, clusters_num):
-    cgram = Clustergram(range(clusters_num, clusters_num+1), n_init=10, random_state=42)
+def add_cluster_col(merged, buildings, standardized, clusters_num, model):
+    cgram = Clustergram(range(clusters_num, clusters_num+1), n_init=10, random_state=None, method=model)
     cgram.fit(standardized.fillna(0))
     merged["cluster"] = cgram.labels[clusters_num].values
     buildings["cluster"] = merged["cluster"]
