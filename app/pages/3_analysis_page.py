@@ -180,13 +180,18 @@ if (
 
             # Display the top 5 and bottom 5 metrics
             top_5 = stats_df_sorted.head(5)
+            # Filter to leave only the columns 'mean', 'std', and '50%'
+            top_5_filtered = top_5[['mean', 'std', '50%']]
             bottom_5 = stats_df_sorted.tail(5)
+            bottom_5_filtered = bottom_5[['mean', 'std', '50%']]
 
             # Show the top 5 and bottom 5
             st.write("Top 5 Metrics by Flexibility Score:")
-            st.write(top_5)
+            #st.write(top_5)
+            st.table(top_5_filtered)
             st.write("Bottom 5 Metrics by Flexibility Score:")
-            st.write(bottom_5)
+            st.table(bottom_5_filtered)
+            # st.write(bottom_5)
 
             # Button to display the full DataFrame
             if st.button("Show full data"):
