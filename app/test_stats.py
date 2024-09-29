@@ -47,10 +47,33 @@ merged = md.merge_all_metrics(tessellations, buildings, streets, junctions)
 metrics_with_percentiles = md.compute_percentiles(merged, queen_3)
 standardized = md.standardize_df(metrics_with_percentiles)
 
-from helper_functions import select_best_num_of_clusters
+import generate_clusters as gc
+fig, ax = gc.plot_num_of_clusters(standardized, standardize=False, min_clusters=2, max_clusters=20, random_state=None)
+fig.show()
+best_scores = gc.best_davies_bouldin_score(standardized, standardize=False, min_clusters=2, max_clusters=20, random_state=None)
 
-best_scores = select_best_num_of_clusters(standardized, standardize=False, min_cluster=1, max_cluster=20, n_init=30, random_state=None, plot=True)
 
+import contextily as ctx
+import matplotlib.pyplot as plt
+
+cgram = gc.get_cgram(standardized, 20)
+
+urban_types = gc.add_cluster_col(merged, buildings, cgram, 10)
+import matplotlib.patches as mpatches
+cmap='tab20'
+colors = plt.get_cmap(cmap).colors
+categories = merged['cluster'].unique()
+legend_handles = [mpatches.Patch(color=colors[i], label=f'Cluster {category+1:02d}') 
+                    for i, category in enumerate(categories)]
+key = lambda patch: patch.get_label()
+sorted_patches = sorted(legend_handles, key=key)
+
+fig, ax = plt.subplots(figsize=(8, 12))
+# cax = fig.add_axes([0.25,0.35,0.03,0.4])
+urban_types.plot(column='cluster', cmap=cmap, legend=False, ax=ax,)
+ctx.add_basemap(ax, crs=streets.crs, source=ctx.providers.CartoDB.Positron)
+ax.set_axis_off()
+ax.legend(handles=sorted_patches, title='Cluster', loc='upper left')
 '''
 ### make clusters
 cgram = get_cgram(standardized, 14)

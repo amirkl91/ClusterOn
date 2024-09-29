@@ -4,7 +4,7 @@ import pandas
 import numpy as np
 from time import time
 
-def get_buildings(buildings, streets=None, junctions=None, local_crs=None, height_name=None, min_area=20):
+def get_buildings(buildings, streets=None, junctions=None, local_crs=None, height_name=None, cluster_name=None, min_area=20):
     '''
     get_buildings(buildings, local_crs, height_name, min_area)
     input:
@@ -48,7 +48,10 @@ def get_buildings(buildings, streets=None, junctions=None, local_crs=None, heigh
             categories.append('height')
             if (buildings['height'].isna().sum() / len(buildings)) < 0.8:
                 categories.pop()
-
+    if cluster_name is not None:
+        buildings['cluster'] = buildings[cluster_name]
+        categories.append('cluster')
+        
     buildings = buildings[categories]
     buildings = buildings.explode(index_parts=False).reset_index(drop=True)
     buildings.geometry = buildings.buffer(0)
@@ -149,9 +152,11 @@ def get_tessellation(buildings, streets=None, tess_mode='enclosed', clim='adapti
         tessellations = tessellations[tessellations['tID'] >= 0]
         tessellations = tessellations.drop_duplicates('tID', keep='first')
 
-        collapsed, _ = momepy.verify_tessellation(tessellations, buildings)
+        collapsed, multypolygons = momepy.verify_tessellation(tessellations, buildings)
         if len(collapsed) > 0:
             buildings.drop(collapsed, inplace=True)
+            if len(multypolygons) > 0:
+                buildings.drop(multypolygons, inplace=True)
             tessellations, enclosures = get_tessellation(buildings, streets, tess_mode, clim)
             
 
