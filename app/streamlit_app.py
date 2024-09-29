@@ -269,7 +269,7 @@ def save_processed_data():
                     zip_filename = zip_checkpoint(tmpdirname, merged, standardized, buildings)
                     with open(zip_filename, "rb") as gf:
                         st.download_button(
-                            label="Download zip for classification",
+                            label="Download zip for classification (part 2)",
                             data=gf,
                             file_name="class_chckpt.zip",
                             mime="application/zip"

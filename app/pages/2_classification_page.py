@@ -99,7 +99,7 @@ def save_output_files():
                 
                 with open(zip_filename, "rb") as gf:
                     st.download_button(
-                        label="Download GPKG of clusters of urban types",
+                        label="Download zip for anlysis (part 3)",
                         data=gf,
                         file_name="clusters.zip",
                         mime="application/zip"
@@ -183,7 +183,7 @@ with recommend:
         if clusters_num < 1:
             st.warning("Please enter a number greater than 0.")
         else:
-            st.success(f"You have selected {clusters_num} clusters.")
+            st.write(f"You have selected {clusters_num} clusters.")
     except ValueError:
         st.error("Please enter a valid integer for the number of clusters.")
 
