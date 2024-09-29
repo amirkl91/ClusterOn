@@ -13,10 +13,12 @@ import fiona
 import zipfile
 from PIL import Image
 import tempfile
+import shutil
+
 
 # Initialize session state variables
 def initialize_session_state():
-    session_keys = ['buildings', 'streets', 'place', 'crs', 'buildings_gdf', 'streets_gdf', 'c', 'cluster_column_name', 'computed_metrics', 'merged', 'metrics_with_percentiles', 'standardized', 'metrics_zip', 'buildings_uploaded', 'streets_uploaded']
+    session_keys = ['buildings', 'streets', 'place', 'crs', 'buildings_gdf', 'streets_gdf', 'c', 'cluster_column_name', 'computed_metrics', 'merged', 'metrics_with_percentiles', 'standardized', 'metrics_zip', 'buildings_uploaded', 'streets_uploaded', 'user_selections']
     for key in session_keys:
         if key not in st.session_state:
             st.session_state[key] = None
@@ -76,55 +78,51 @@ def process_data(place, network_type, local_crs, _buildings_gdf, _streets_gdf, h
 
     return merged, metrics_with_percentiles, standardized, buildings, streets
 
+def clear_temp_dir(temp_dir):
+    """Remove all files and directories in the specified temporary directory without removing the directory itself."""
+    if os.path.exists(temp_dir):
+        for item in os.listdir(temp_dir):
+            item_path = os.path.join(temp_dir, item)
+            if os.path.isdir(item_path):
+                shutil.rmtree(item_path)  # Remove the directory and its contents
+            else:
+                os.remove(item_path)  # Remove the file
+
+
 def load_gdb_data(data_source_key, data_type):
+    
     st.sidebar.header(f"Upload {data_type} Data")
-    uploaded_file = st.sidebar.file_uploader(f"Upload a zip file containing a {data_type} GDB", type="zip", key=f"{data_source_key}_upload")
+    uploaded_file = st.sidebar.file_uploader(f"Upload a zip file of a {data_type} GDB/SHP", type="zip", key=f"{data_source_key}_upload")
+
+    temp_dir = f"temp_extracted_{data_source_key}"
 
     if uploaded_file is not None:
+        # Clear previous content from the temp directory
+        # clear_temp_dir(temp_dir)
+
         with zipfile.ZipFile(uploaded_file, "r") as zip_ref:
-            zip_ref.extractall(f"temp_extracted_{data_source_key}")
+            # Check for GDB or Shapefile
+            is_gdb = any('.gdb' in file for file in zip_ref.namelist())
+            is_shp = any('.shp' in file for file in zip_ref.namelist())
+            # Verify the file is supported
+            if not is_gdb and not is_shp:
+                st.error('Unsupported file format')
+            if is_gdb:
+                ext = '.gdb'
+            elif is_shp:
+                ext = '.shp'
+            # Finde main fine - in case of .gdb is always the correct directory, in case of .shp is the 1st .shp encountered - may be incorrect if multiple layers!
+            mainfile = [file for file in zip_ref.namelist() if ext in file][0]
+            zip_ref.extractall(temp_dir)
+        mainfile = os.path.join(temp_dir,mainfile)        
+        
 
-        extracted_items = os.listdir(f"temp_extracted_{data_source_key}")
-        # Check for GDB or Shapefile
-        gdb_path = next((os.path.join(f"temp_extracted_{data_source_key}", item) for item in extracted_items if item.endswith(".gdb")), None)
-        shp_path = next((os.path.join(f"temp_extracted_{data_source_key}", item) for item in extracted_items if item.endswith(".shp")), None)
-
-        # Print all the extracted files
-        extract_dir = f"temp_extracted_{data_source_key}"
-        st.write(f"Files in {extract_dir}:")
-        for item in extracted_items:
-            st.write(item)  # This will print all the files in the directory
-
-        # if gdb_path:
-        #     try:
-        #         if not os.path.exists(gdb_path) or not os.path.isdir(gdb_path):
-        #             st.sidebar.error(f"The specified path does not exist or is not a valid directory for {data_type} GDB.")
-        #         else:
-        #             layers = fiona.listlayers(gdb_path)
-        #             st.sidebar.write(f"Layers found in the {data_type} GDB: {layers}")
-
-        #             layer_index = st.sidebar.selectbox(f"Select a {data_type} layer", range(len(layers)), format_func=lambda x: layers[x], key=f"{data_source_key}_layer")
-
-        #             if st.sidebar.button(f"Load {data_type} Layer", key=f"{data_source_key}_load"):
-        #                 gdf = load_gdb_layer(gdb_path, layer_index=layer_index)
-        #                 st.session_state[f'{data_source_key}_gdf'] = gdf
-        #                 st.sidebar.write(gdf.head())
-        #                 if data_type == 'buildings' :
-        #                     st.session_state['buildings_uploaded'] = True
-        #                 else: 
-        #                    st.session_state['streets_uploaded'] = True 
-        #     except Exception as e:
-        #         st.error(f"An error occurred: {e}")
-        # Handle GDB upload
-         # Handle Shapefile upload
-        if shp_path:
+        if is_shp:
             st.write("We in shp")
-            st.write(gdb_path)
-            st.write(shp_path)
 
             try:
                 # Load the shapefile into a GeoDataFrame
-                gdf = gpd.read_file(shp_path)
+                gdf = gpd.read_file(mainfile)
                 st.session_state[f'{data_source_key}_gdf'] = gdf
                 st.sidebar.write(f"{data_type} shapefile loaded successfully!")
                 st.sidebar.write(gdf.head())
@@ -137,22 +135,21 @@ def load_gdb_data(data_source_key, data_type):
             except Exception as e:
                 st.error(f"An error occurred while reading the shapefile: {e}")
 
-        elif gdb_path:
+        elif is_gdb:
             st.write("We in gdb")
-            st.write(gdb_path)
             try:
-                if not os.path.exists(gdb_path) or not os.path.isdir(gdb_path):
+                if not os.path.exists(mainfile) or not os.path.isdir(mainfile):
                     st.sidebar.error(f"The specified path does not exist or is not a valid directory for {data_type} GDB.")
                 else:
                     # List layers in GDB
-                    layers = fiona.listlayers(gdb_path)
+                    layers = fiona.listlayers(mainfile)
                     st.sidebar.write(f"Layers found in the {data_type} GDB: {layers}")
 
                     # Select layer
                     layer_index = st.sidebar.selectbox(f"Select a {data_type} layer", range(len(layers)), format_func=lambda x: layers[x], key=f"{data_source_key}_layer")
 
                     if st.sidebar.button(f"Load {data_type} Layer", key=f"{data_source_key}_load"):
-                        gdf = gpd.read_file(gdb_path, layer=layers[layer_index])
+                        gdf = gpd.read_file(mainfile, layer=layers[layer_index])
                         st.session_state[f'{data_source_key}_gdf'] = gdf
                         st.sidebar.write(gdf.head())
 
@@ -179,7 +176,7 @@ def load_osm_data(data_source_key, data_type, is_streets):
     st.sidebar.markdown("[Don't know your CRS?](https://epsg.io/#google_vignette)", unsafe_allow_html=True)
     if is_streets:
         st.session_state['streets_uploaded'] = True
-        network_type = st.sidebar.selectbox(f"Select Network Type for {data_type}", ["drive", "walk", "bike"], index=0, key=f"{data_source_key}_network")
+        network_type = st.sidebar.selectbox(f"Select Network Type for {data_type}", ["drive", "walk", "bike", 'all'], index=0, key=f"{data_source_key}_network")
     else:
         st.session_state['buildings_uploaded'] = True
         network_type = None
@@ -207,12 +204,13 @@ def display_metrics_window(metrics_list):
                 
                 # Save the user's choice (True/False) in the dictionary
                 user_selections[metric] = is_selected
+        st.session_state['user_selections'] = user_selections
 
 def upload_buildings_data():
     st.sidebar.header("Choose Buildings Data Source")
     bld_data_source = st.sidebar.radio("Select buildings data source:", 
-                                        ("Upload buildings GDB file", "Use buildings OSM data"))
-    if bld_data_source == "Upload buildings GDB file":
+                                        ("Upload buildings from GIS export", "Use buildings OSM data"))
+    if bld_data_source == "Upload buildings from GIS export":
         load_gdb_data("buildings", "buildings")
         height_column_name = st.sidebar.text_input("Enter the name of the **height** column:", value=None)
         cluster_column_name = st.sidebar.text_input("Enter the name of the **cluster** column:", value=None)
@@ -226,8 +224,8 @@ def upload_buildings_data():
 def upload_streets_data():
     st.sidebar.header("Choose Streets Data Source")
     str_data_source = st.sidebar.radio("Select streets data source:", 
-                                        ("Upload streets GDB file", "Use streets OSM data"))
-    if str_data_source == "Upload streets GDB file":
+                                        ("Upload streets from GIS export", "Use streets OSM data"))
+    if str_data_source == "Upload streets from GIS export":
         load_gdb_data("streets", "streets")
     else:
         place, local_crs, network_type = load_osm_data("streets", "streets", True)
@@ -291,7 +289,7 @@ def save_processed_data():
                     st.error(f"An error occurred while saving: {e}")
         else:
             merged = None
-            st.warning("Please upload files first, then run the preprocess.")
+            st.warning("Select if you wish to save the processed files.")
 
 def zip_checkpoint(tempdir, _merged, standardized, _buildings):
     # Define file paths for each gpkg file
@@ -344,14 +342,21 @@ def plot_metrics():
         str_metrics_toplot = ['openness', 'str_length', 'str_linearity', 'str_longest_axis', 'str_orientation', 
                               'width', 'width_dev']
 
-        buildings = st.session_state['buildings']
         streets = st.session_state['streets']
         merged = st.session_state['merged']
         st.header('Plot metrics')
         data_choice = st.radio('Choose data type:', ('Buildings', 'Streets'))
 
         gdf_to_plot = merged if data_choice == 'Buildings' else streets
-        metrics_toplot = bldg_metrics_toplot if data_choice == 'Buildings' else str_metrics_toplot
+        # metrics_toplot = bldg_metrics_toplot if data_choice == 'Buildings' else str_metrics_toplot
+        # Choose metrics based on the user's selections, filtering out those that are selected
+        if data_choice == 'Buildings':
+            metrics_toplot = [metric for metric in bldg_metrics_toplot if st.session_state['user_selections'].get(metric, True)]
+            gdf_to_plot = merged
+        else:
+            metrics_toplot = [metric for metric in str_metrics_toplot if st.session_state['user_selections'].get(metric, True)]
+            gdf_to_plot = streets
+
 
         metric_toplot = st.selectbox('Select which metric to plot', metrics_toplot)
 

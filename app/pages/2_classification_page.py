@@ -165,17 +165,17 @@ with recommend:
     if st.session_state.rec_list is not None:
         st.write(f"Our recommendations for the number of clusters are ranked from most to least preferred: {st.session_state.rec_list}")
 
-# Show cluster recommendation plots
-if st.button("Show Recommendation Calculation Plots"):
-    if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
-        show_cluster_plots()
-    else:
-        st.error("Please load data first")
+with recommend:
+    # Show cluster recommendation plots
+    if st.button("Show Recommendation Calculation Plots"):
+        if all(st.session_state.get(key) is not None for key in ['merged', 'standardized', 'buildings']):
+            show_cluster_plots()
+        else:
+            st.error("Please load data first")
+        
 # Display the recommendation
 if st.session_state.cluster_fig is not None:
     st.pyplot(st.session_state.cluster_fig)
-
-with recommend:
     # Input number of clusters
     clusters_num = st.text_input("Enter the number of clusters:", value="7")
     try:
