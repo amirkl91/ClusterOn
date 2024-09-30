@@ -440,7 +440,7 @@ user_selections = {}
 
 ######################### Main App Code #########################
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title='ClusterOn')
 
 st.title("Morphological Analysis Tool 🌍📌📏")
 st.markdown("# Part 1: Preprocess 🧹 & Metrics generation 📐")

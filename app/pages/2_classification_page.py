@@ -6,6 +6,8 @@ import zipfile
 import tempfile
 import geopandas as gpd
 
+st.set_page_config(layout="wide", page_title='ClusterOn')
+
 ######################### Session state initialization #########################
 # Initialize session state variables
 def init_session_state():
