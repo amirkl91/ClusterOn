@@ -75,6 +75,9 @@ cluster_merged = st.session_state.get("cluster_merged")
 if cluster_merged is not None:
     cluster_column_name = "cluster"
     st.sidebar.success("Preprocessed data loaded by default.")
+elif 'merged' in st.session_state:
+        st.session_state['cluster_merged'] = st.session_state.get('merged')
+        st.sidebar.success("Preprocessed data loaded by default, please Enter cluster name.")
 else:
     st.sidebar.warning("Preprocessed data not found. Please upload a file.")
 
@@ -107,7 +110,7 @@ if st.button("Analyze Data"):
             cluster_merged
         )  # Ensure it's a cleaned GeoDataFrame
         analyzed_gdf, results, global_results = analyze_gdf(
-            cluster_merged, "cluster", None
+            cluster_merged, st.session_state.get("cluster_column_name"), None
         )
 
         st.session_state["results"] = results
