@@ -43,6 +43,7 @@ for global analysis:
 
 
 def analyze_gdf(gdf, classification_column, csv_folder_path):
+    sorted_gdf = gdf.sort_values(by=classification_column)
     cluster_results = {}
     # Loop over each cluster in the classification column
     for cluster in gdf[classification_column].unique():
@@ -454,7 +455,9 @@ def varify_cleaned_gdf(gdf):
     gdf.fillna(0, inplace=True)  # Fill remaining NaNs with 0
 
     # Drop unwanted columns
-    gdf.drop(columns=["street_index", "junction_index"], inplace=True, errors="ignore")
+    gdf.drop(
+        columns=["street_index", "junction_index", "tID"], inplace=True, errors="ignore"
+    )
 
     # Keep only columns that are numeric (int, float) or the 'geometry' column
     numeric_columns = gdf.select_dtypes(
@@ -464,7 +467,6 @@ def varify_cleaned_gdf(gdf):
 
     # Filter the DataFrame to keep only the relevant columns
     gdf = gdf[columns_to_keep]
-
     return gdf
 
 
