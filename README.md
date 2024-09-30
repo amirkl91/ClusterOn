@@ -10,6 +10,9 @@ The metrics are then utilized for the detection of urban clusters within the are
 
 A statistical analysis of the clusters is then performed and visualized.
 
+## Zip files for windows
+The latest versions of the application can be found at: https://drive.google.com/drive/folders/1H_L4Z8-4u4spILFSY_iYLom680190FbZ?usp=drive_link
+
 ##  app
 * Directory containing code for the app. subdivisions are preliminary for now.
 
