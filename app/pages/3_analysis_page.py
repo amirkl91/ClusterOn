@@ -52,6 +52,16 @@ def process_uploaded_zip(uploaded_zip):
 # Streamlit App Title
 st.title("Morphological Analysis Tool 🌍📌📏")
 st.markdown("# Part 3: Analysis of city textures 📊")
+st.markdown("""
+    ## How to analyze the data:
+    1. After completing Part 2 (Data Preprocessing), you have two options to proceed:
+        - Directly move on to Part 2, as the processed data is already saved.
+        - Alternatively, upload the ZIP file generated in Part 2.
+    2. Run Analyze Data.
+    3. You can explore the morphological characteristics of urban areas through two main options:
+        - Show Global Data: provides an overview of the entire dataset.
+        - Show Cluster Data: allowing you to dive deeper into specific clusters for more detailed analysis.
+""")
 
 ######################### upload: #########################
 
@@ -170,13 +180,18 @@ if (
 
             # Display the top 5 and bottom 5 metrics
             top_5 = stats_df_sorted.head(5)
+            # Filter to leave only the columns 'mean', 'std', and '50%'
+            top_5_filtered = top_5[['mean', 'std', '50%']]
             bottom_5 = stats_df_sorted.tail(5)
+            bottom_5_filtered = bottom_5[['mean', 'std', '50%']]
 
             # Show the top 5 and bottom 5
             st.write("Top 5 Metrics by Flexibility Score:")
-            st.write(top_5)
+            #st.write(top_5)
+            st.table(top_5_filtered)
             st.write("Bottom 5 Metrics by Flexibility Score:")
-            st.write(bottom_5)
+            st.table(bottom_5_filtered)
+            # st.write(bottom_5)
 
             # Button to display the full DataFrame
             if st.button("Show full data"):

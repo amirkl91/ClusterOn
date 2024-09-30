@@ -123,6 +123,7 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
 
     # Iterate through each method and create a plot
     for i, method in enumerate(methods):
+
         ax = axes[i // 2, i % 2]  # Positioning subplots in 2x2 grid
         ax.plot(scores['K'], scores[method], marker='o', label=method)
         ax.vlines(best_scores[method], ax.get_ylim()[0], ax.get_ylim()[1], linestyles='dashed')
@@ -134,8 +135,7 @@ def plot_num_of_clusters(gdf: gpd.GeoDataFrame, model='kmeans', standardize=True
     return fig,axes
 
 def add_cluster_col(merged, buildings, standardized, clusters_num, model):
-    cgram = Clustergram(range(clusters_num, clusters_num+1), n_init=10, random_state=None, method=model)
-    cgram.fit(standardized.fillna(0))
+    cgram = get_cluster(standardized, model, standardize=False, min_clusters=clusters_num, max_clusters=clusters_num+1, n_init=10, random_state=None)
     merged["cluster"] = cgram.labels[clusters_num].values
     buildings["cluster"] = merged["cluster"]
     return buildings ,merged

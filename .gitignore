@@ -172,3 +172,5 @@ output/
 *.gpkg
 
 sweetviz_report.html
+
+temp*
